@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Flujo en vivo para la pantalla principal: qué se capturó, qué se descartó y por qué.
@@ -30,6 +31,9 @@ class EventLog(private val capacity: Int = 200) {
         val discarded: Int = 0,
         val needsReview: Int = 0,
     )
+
+    /** Desempata eventos generados en el mismo milisegundo (por ejemplo, «Probar ruido»). */
+    private val sequence = AtomicLong(0)
 
     private val _entries = MutableStateFlow<List<Entry>>(emptyList())
     val entries: StateFlow<List<Entry>> = _entries.asStateFlow()
@@ -60,7 +64,7 @@ class EventLog(private val capacity: Int = 200) {
                 _stats.update { it.copy(discarded = it.discarded + 1) }
                 push(
                     Entry(
-                        id = "d-${now}-${result.layer}",
+                        id = uniqueId("d", now, result.layer),
                         kind = Entry.Kind.DISCARDED,
                         layer = result.layer,
                         title = "Descartado en capa ${result.layer}",
@@ -74,7 +78,7 @@ class EventLog(private val capacity: Int = 200) {
                 _stats.update { it.copy(needsReview = it.needsReview + 1) }
                 push(
                     Entry(
-                        id = "r-${now}-${result.layer}",
+                        id = uniqueId("r", now, result.layer),
                         kind = Entry.Kind.REVIEW,
                         layer = result.layer,
                         title = "Sin clasificar · capa ${result.layer}",
@@ -87,8 +91,11 @@ class EventLog(private val capacity: Int = 200) {
     }
 
     fun info(message: String, now: Long = System.currentTimeMillis()) {
-        push(Entry("i-$now", Entry.Kind.INFO, 0, "Servicio", message, now))
+        push(Entry(uniqueId("i", now, 0), Entry.Kind.INFO, 0, "Servicio", message, now))
     }
+
+    private fun uniqueId(prefix: String, timestamp: Long, layer: Int): String =
+        "$prefix-$timestamp-$layer-${sequence.incrementAndGet()}"
 
     fun clear() {
         _entries.value = emptyList()

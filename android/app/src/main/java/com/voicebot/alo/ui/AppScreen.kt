@@ -87,6 +87,7 @@ fun AppScreen(
     onMarkReviewed: (Long) -> Unit,
     onClearHistory: () -> Unit,
     onConsumeBanner: () -> Unit,
+    onToggleAppEnabled: (Boolean) -> Unit,
     onToggleVoice: (Boolean) -> Unit,
     onToggleGroups: (Boolean) -> Unit,
     onToggleHeadphones: (Boolean) -> Unit,
@@ -112,10 +113,10 @@ fun AppScreen(
                     Column {
                         Text("Aló", style = MaterialTheme.typography.headlineSmall)
                         Text(
-                            text = if (permissionGranted) {
-                                "${stats.captured} capturados · ${stats.discarded} descartados"
-                            } else {
-                                "Sin acceso a notificaciones"
+                            text = when {
+                                !settings.appEnabled -> "Pausado"
+                                permissionGranted -> "${stats.captured} capturados · ${stats.discarded} descartados"
+                                else -> "Sin acceso a notificaciones"
                             },
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -138,6 +139,11 @@ fun AppScreen(
                 .fillMaxSize()
                 .padding(padding),
         ) {
+            MasterControl(
+                enabled = settings.appEnabled,
+                onToggle = onToggleAppEnabled,
+            )
+
             if (!permissionGranted) {
                 PermissionCard(onOpenPermissionSettings)
             }
@@ -210,6 +216,52 @@ fun AppScreen(
                     onToggleProtection = onToggleProtection,
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun MasterControl(enabled: Boolean, onToggle: (Boolean) -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .clickable { onToggle(!enabled) },
+        colors = CardDefaults.cardColors(
+            containerColor = if (enabled) {
+                AloColors.read.copy(alpha = 0.14f)
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant
+            },
+        ),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(10.dp)
+                    .background(
+                        if (enabled) AloColors.read else MaterialTheme.colorScheme.onSurfaceVariant,
+                        RoundedCornerShape(99.dp),
+                    ),
+            )
+            Spacer(Modifier.width(10.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    if (enabled) "Aló está activo" else "Aló está pausado",
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 15.sp,
+                )
+                Text(
+                    if (enabled) "Escuchará y guardará los mensajes nuevos"
+                    else "No capturará ni reproducirá mensajes",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 11.5.sp,
+                )
+            }
+            Switch(checked = enabled, onCheckedChange = onToggle)
         }
     }
 }

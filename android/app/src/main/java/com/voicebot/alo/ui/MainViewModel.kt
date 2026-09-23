@@ -146,6 +146,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     // ── Ajustes ────────────────────────────────────────────────────────────────
 
+    fun setAppEnabled(enabled: Boolean) {
+        graph.settings.setAppEnabled(enabled)
+        if (!enabled) {
+            graph.announcer.stop()
+            ListenerGuardianService.stop(getApplication<Application>())
+            _banner.value = "Aló está pausado: no capturará ni leerá mensajes"
+        } else {
+            if (graph.settings.state.value.protectionEnabled) {
+                runCatching { ListenerGuardianService.start(getApplication<Application>()) }
+            }
+            _banner.value = "Aló está activo y escuchando mensajes nuevos"
+        }
+    }
+
     fun setVoiceEnabled(enabled: Boolean) {
         graph.settings.setVoiceEnabled(enabled)
         if (!enabled) graph.announcer.stop()

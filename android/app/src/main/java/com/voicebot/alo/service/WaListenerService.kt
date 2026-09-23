@@ -77,6 +77,8 @@ class WaListenerService : NotificationListenerService() {
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         val notification = sbn ?: return
+        // Interruptor maestro: mientras Aló está pausado no captura, guarda ni reproduce.
+        if (!graph.settings.state.value.appEnabled) return
         val raw = runCatching { NotificationSnapshot.from(notification) }.getOrNull() ?: return
 
         // Capa 0 antes de cualquier trabajo: si no es WhatsApp, no se procesa ni se registra.
@@ -166,6 +168,7 @@ class WaListenerService : NotificationListenerService() {
     }
 
     private suspend fun backfillActiveNotifications() {
+        if (!graph.settings.state.value.appEnabled) return
         val active = runCatching { activeNotifications }.getOrNull() ?: return
         val whatsapp = active.filter { WhatsappPackages.isWhatsapp(it.packageName) }
         if (whatsapp.isEmpty()) return

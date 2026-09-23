@@ -84,6 +84,7 @@ class MainActivity : ComponentActivity() {
                     onMarkReviewed = viewModel::markReviewed,
                     onClearHistory = viewModel::clearHistory,
                     onConsumeBanner = viewModel::consumeBanner,
+                    onToggleAppEnabled = viewModel::setAppEnabled,
                     onToggleVoice = viewModel::setVoiceEnabled,
                     onToggleGroups = viewModel::setReadGroups,
                     onToggleHeadphones = viewModel::setOnlyWithHeadphones,

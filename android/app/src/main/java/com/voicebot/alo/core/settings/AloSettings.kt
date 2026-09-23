@@ -17,6 +17,7 @@ class AloSettings(context: Context) {
     enum class AppearanceMode { SYSTEM, LIGHT, DARK }
 
     data class Snapshot(
+        val appEnabled: Boolean = true,
         val voiceEnabled: Boolean = true,
         val languageTag: String = "es-PE",
         val readGroups: Boolean = true,
@@ -58,6 +59,8 @@ class AloSettings(context: Context) {
         )
     }
 
+    fun setAppEnabled(enabled: Boolean) = prefs.edit().putBoolean(KEY_APP_ENABLED, enabled).apply()
+
     fun setVoiceEnabled(enabled: Boolean) = prefs.edit().putBoolean(KEY_VOICE, enabled).apply()
 
     fun setLanguageTag(tag: String) = prefs.edit().putString(KEY_LANGUAGE, tag).apply()
@@ -94,6 +97,7 @@ class AloSettings(context: Context) {
 
     private fun load(): Snapshot = with(prefs) {
         Snapshot(
+            appEnabled = getBoolean(KEY_APP_ENABLED, true),
             voiceEnabled = getBoolean(KEY_VOICE, true),
             languageTag = getString(KEY_LANGUAGE, "es-PE") ?: "es-PE",
             readGroups = getBoolean(KEY_READ_GROUPS, true),
@@ -116,6 +120,7 @@ class AloSettings(context: Context) {
         getInt(key, VALUE_NONE).takeIf { it != VALUE_NONE }
 
     companion object {
+        private const val KEY_APP_ENABLED = "app_enabled"
         private const val KEY_VOICE = "voice_enabled"
         private const val KEY_LANGUAGE = "language_tag"
         private const val KEY_READ_GROUPS = "read_groups"

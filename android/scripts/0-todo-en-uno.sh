@@ -21,6 +21,6 @@ export PATH="$PATH:$HOME/.local/bin:${ANDROID_HOME:-$HOME/Android/Sdk}/platform-
 bash "$DIR/2-compilar-e-instalar.sh"
 
 echo
-echo "Siguiente:  activa 'Modo prueba' en Ajustes y ejecuta"
+echo "Siguiente:  usa los botones 'Probar voz' y 'Probar ruido' dentro de la app"
 echo "  bash scripts/4-simular-whatsapp.sh"
 echo "  bash scripts/3-ver-logs.sh"

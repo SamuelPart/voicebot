@@ -29,6 +29,7 @@ class AloSettings(context: Context) {
         val maxCharsPerMessage: Int = 320,
         val vibrateInsteadOfSpeak: Boolean = false,
         val appearanceMode: AppearanceMode = AppearanceMode.SYSTEM,
+        val protectionEnabled: Boolean = false,
     )
 
     private val prefs: SharedPreferences =
@@ -88,6 +89,9 @@ class AloSettings(context: Context) {
     fun setAppearanceMode(mode: AppearanceMode) =
         prefs.edit().putString(KEY_APPEARANCE, mode.name).apply()
 
+    fun setProtectionEnabled(enabled: Boolean) =
+        prefs.edit().putBoolean(KEY_PROTECTION, enabled).apply()
+
     private fun load(): Snapshot = with(prefs) {
         Snapshot(
             voiceEnabled = getBoolean(KEY_VOICE, true),
@@ -104,6 +108,7 @@ class AloSettings(context: Context) {
             appearanceMode = runCatching {
                 AppearanceMode.valueOf(getString(KEY_APPEARANCE, AppearanceMode.SYSTEM.name).orEmpty())
             }.getOrDefault(AppearanceMode.SYSTEM),
+            protectionEnabled = getBoolean(KEY_PROTECTION, false),
         )
     }
 
@@ -123,6 +128,7 @@ class AloSettings(context: Context) {
         private const val KEY_MAX_CHARS = "max_chars"
         private const val KEY_VIBRATE_INSTEAD = "vibrate_instead"
         private const val KEY_APPEARANCE = "appearance_mode"
+        private const val KEY_PROTECTION = "protection_enabled"
         private const val VALUE_NONE = -1
     }
 }

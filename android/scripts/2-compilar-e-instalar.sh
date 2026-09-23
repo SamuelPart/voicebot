@@ -78,6 +78,6 @@ echo
 echo -e "${VERDE}==================== INSTALADO ====================${FIN}"
 echo "  Ver qué decide el filtro en vivo:"
 echo -e "    ${AZUL}bash scripts/3-ver-logs.sh${FIN}"
-echo "  Simular mensajes de WhatsApp (activa el 'Modo prueba' en Ajustes):"
+echo "  Las simulaciones por adb fueron retiradas; usa 'Probar voz' y 'Probar ruido' en En vivo:"
 echo -e "    ${AZUL}bash scripts/4-simular-whatsapp.sh${FIN}"
 echo "  Desinstalar:  adb uninstall $PAQUETE"

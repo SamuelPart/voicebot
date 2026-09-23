@@ -1,14 +1,20 @@
 package com.voicebot.alo.ui
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.luminance
+import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -30,6 +36,11 @@ class MainActivity : ComponentActivity() {
             val banner = viewModel.banner.collectAsStateWithLifecycle()
             val speaking = viewModel.speaking.collectAsStateWithLifecycle()
             val discarded = viewModel.discardedCount.collectAsStateWithLifecycle()
+            val notificationPermission = rememberLauncherForActivityResult(
+                ActivityResultContracts.RequestPermission(),
+            ) { granted ->
+                viewModel.setProtectionEnabled(granted)
+            }
 
             AloTheme(appearanceMode = settings.value.appearanceMode) {
                 val lightSystemBars = MaterialTheme.colorScheme.background.luminance() > 0.5f
@@ -48,6 +59,7 @@ class MainActivity : ComponentActivity() {
                 AppScreen(
                     permissionGranted = state.value,
                     settings = settings.value,
+                    batteryGuide = viewModel.batteryGuide,
                     entries = entries.value,
                     stats = stats.value,
                     messages = messages.value,
@@ -81,6 +93,19 @@ class MainActivity : ComponentActivity() {
                     onRetentionChange = viewModel::setRetentionDays,
                     onQuietHoursChange = viewModel::setQuietHours,
                     onAppearanceModeChange = viewModel::setAppearanceMode,
+                    onToggleProtection = { enabled ->
+                        val needsPermission = enabled &&
+                            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                            ContextCompat.checkSelfPermission(
+                                this,
+                                Manifest.permission.POST_NOTIFICATIONS,
+                            ) != PackageManager.PERMISSION_GRANTED
+                        if (needsPermission) {
+                            notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        } else {
+                            viewModel.setProtectionEnabled(enabled)
+                        }
+                    },
                 )
             }
         }

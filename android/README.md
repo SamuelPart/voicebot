@@ -225,6 +225,6 @@ gradle testDebugUnitTest
 *(Integración continua: copia `android/ci/github-workflow.yml` a `.github/workflows/android.yml`
 para que GitHub Actions ejecute los tests y compile el APK en cada push — ver instrucciones dentro del archivo.)*
 
-- `NotificationNormalizerTest` (23 casos): mensajes individuales y de grupo, solo mensajes nuevos, backup en curso, resumen de grupo, llamada perdida, estado, canal de multimedia, paquete ajeno, modo prueba por adb, aviso de respaldo, código de verificación, “mensaje que suena a aviso” (no debe perderse), solo emojis, aviso de sistema dentro del chat, mensajes propios, reemisión sin duplicar, mensaje nuevo sí procesado, buzón de revisión, chat silenciado, horario de silencio, solo con audífonos y pausa en llamadas.
+- `NotificationNormalizerTest` (23 casos): mensajes individuales y de grupo, solo mensajes nuevos, backup en curso, resumen de grupo, llamada perdida, estado, canal de multimedia, paquete ajeno, aviso de respaldo, código de verificación, “mensaje que suena a aviso” (no debe perderse), solo emojis, aviso de sistema dentro del chat, mensajes propios, reemisión sin duplicar, mensaje nuevo sí procesado, buzón de revisión, chat silenciado, horario de silencio, solo con audífonos y pausa en llamadas.
 - `SpeechTextBuilderTest` (8 casos): plantillas individual/grupo, agrupación de varios mensajes, enlaces y emojis, recorte de mensajes largos, remitente desconocido (frase neutra).
 - `TextUtilsTest` (7 casos): normalización de acentos, patrones multilingües, hash estable, limpieza para voz, preview.

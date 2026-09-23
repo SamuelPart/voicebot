@@ -56,7 +56,7 @@ También puedes crear un emulador desde **Tools → Device Manager → Add a new
 2. Pulsa el botón verde **Run 'app'**.
 3. Android Studio compilará, instalará y abrirá Aló.
 4. En el teléfono, entra en **Ajustes → Notificaciones → Acceso especial a notificaciones → Aló** y concede el acceso. La ruta puede variar; la app también ofrece un botón para abrir esa pantalla.
-5. En Aló abre **Ajustes**, activa **Modo prueba (solo debug)** únicamente para pruebas.
+5. En Aló abre **En vivo** y usa **Probar voz** o **Probar ruido** para validar la interfaz sin WhatsApp.
 
 Resultado esperado: la app abre la pantalla **En vivo**, no solicita acceso a Internet y muestra el estado del acceso a notificaciones.
 

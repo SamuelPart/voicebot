@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.voicebot.alo.core.log.EventLog
 import com.voicebot.alo.core.settings.AloSettings
+import com.voicebot.alo.core.util.BatteryGuide
 import com.voicebot.alo.data.db.DroppedEntity
 import com.voicebot.alo.data.db.MessageEntity
 import com.voicebot.alo.ui.theme.AloColors
@@ -68,6 +69,7 @@ import java.util.Locale
 fun AppScreen(
     permissionGranted: Boolean,
     settings: AloSettings.Snapshot,
+    batteryGuide: BatteryGuide,
     entries: List<EventLog.Entry>,
     stats: EventLog.Stats,
     messages: List<MessageEntity>,
@@ -94,6 +96,7 @@ fun AppScreen(
     onRetentionChange: (Int) -> Unit,
     onQuietHoursChange: (Int?, Int?) -> Unit,
     onAppearanceModeChange: (AloSettings.AppearanceMode) -> Unit,
+    onToggleProtection: (Boolean) -> Unit,
 ) {
     var tab by remember { mutableIntStateOf(0) }
     val tabs = listOf("En vivo", "Historial", "Revisar (${reviewQueue.size})", "Ajustes")
@@ -193,6 +196,7 @@ fun AppScreen(
                 2 -> ReviewTab(reviewQueue, onMarkReviewed)
                 else -> SettingsTab(
                     settings = settings,
+                    batteryGuide = batteryGuide,
                     onOpenBatterySettings = onOpenBatterySettings,
                     onToggleVoice = onToggleVoice,
                     onToggleGroups = onToggleGroups,
@@ -203,6 +207,7 @@ fun AppScreen(
                     onRetentionChange = onRetentionChange,
                     onQuietHoursChange = onQuietHoursChange,
                     onAppearanceModeChange = onAppearanceModeChange,
+                    onToggleProtection = onToggleProtection,
                 )
             }
         }
@@ -457,6 +462,7 @@ private fun ReviewTab(queue: List<DroppedEntity>, onMarkReviewed: (Long) -> Unit
 @Composable
 private fun SettingsTab(
     settings: AloSettings.Snapshot,
+    batteryGuide: BatteryGuide,
     onOpenBatterySettings: () -> Unit,
     onToggleVoice: (Boolean) -> Unit,
     onToggleGroups: (Boolean) -> Unit,
@@ -467,6 +473,7 @@ private fun SettingsTab(
     onRetentionChange: (Int) -> Unit,
     onQuietHoursChange: (Int?, Int?) -> Unit,
     onAppearanceModeChange: (AloSettings.AppearanceMode) -> Unit,
+    onToggleProtection: (Boolean) -> Unit,
 ) {
     Column(
         Modifier
@@ -474,6 +481,17 @@ private fun SettingsTab(
             .verticalScroll(rememberScrollState())
             .padding(12.dp),
     ) {
+        Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+            Column(Modifier.padding(horizontal = 12.dp)) {
+                ToggleRow(
+                    "Protección en segundo plano",
+                    "Muestra una notificación permanente y rearma el lector si el sistema lo desconecta",
+                    settings.protectionEnabled,
+                    onToggleProtection,
+                )
+            }
+        }
+        Spacer(Modifier.height(10.dp))
         ToggleRow("Leer en voz alta", "Apaga la voz sin dejar de capturar mensajes", settings.voiceEnabled, onToggleVoice)
         ToggleRow("Leer mensajes de grupos", null, settings.readGroups, onToggleGroups)
         ToggleRow("Solo con audífonos o Bluetooth", "Ideal para el auto o el trabajo", settings.onlyWithHeadphones, onToggleHeadphones)
@@ -524,17 +542,24 @@ private fun SettingsTab(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.Settings, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text("Teléfonos que matan el servicio en segundo plano", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                    Text(batteryGuide.title, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
                 }
-                Spacer(Modifier.height(4.dp))
                 Text(
-                    "Si en tu Xiaomi, Samsung, Huawei u Oppo la lectura se detiene, desactiva la optimización " +
-                        "de batería para Aló y marca la app como \"sin restricciones\".",
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    "Guía detectada para ${batteryGuide.manufacturer}",
+                    fontSize = 11.5.sp,
+                    color = MaterialTheme.colorScheme.primary,
                 )
+                Spacer(Modifier.height(6.dp))
+                batteryGuide.steps.forEachIndexed { index, step ->
+                    Text(
+                        "${index + 1}. $step",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 2.dp),
+                    )
+                }
                 Spacer(Modifier.height(8.dp))
-                OutlinedButton(onClick = onOpenBatterySettings) { Text("Abrir ajustes de batería", fontSize = 12.sp) }
+                OutlinedButton(onClick = onOpenBatterySettings) { Text("Abrir ajuste recomendado", fontSize = 12.sp) }
             }
         }
 

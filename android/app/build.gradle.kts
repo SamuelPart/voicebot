@@ -43,7 +43,6 @@ android {
 
     buildFeatures {
         compose = true
-        // BuildConfig.DEBUG: se usa para mostrar el "Modo prueba" (notificaciones por adb) solo en debug.
         buildConfig = true
     }
 
@@ -84,6 +83,7 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
+    implementation(libs.androidx.work.runtime.ktx)
     // Fase 1: cifrado en reposo -> net.zetetic:android-database-sqlcipher + SupportFactory
 
     testImplementation(libs.junit)

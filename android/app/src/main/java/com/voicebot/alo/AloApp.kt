@@ -10,6 +10,9 @@ class AloApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        // Prepara el TTS al iniciar el proceso. Si el primer evento llega con la pantalla apagada,
+        // la voz ya está inicializada y no depende de que el usuario abra una pantalla.
+        graph.announcer
         if (graph.settings.state.value.protectionEnabled) {
             ListenerWatchdogWorker.schedule(this)
         }

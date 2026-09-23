@@ -36,27 +36,61 @@ object NotificationExtras {
      * de conversación. Un null aquí NO decide el descarte: decide la capa 2 del filtro.
      */
     fun messagingStyle(n: android.app.Notification): StyleInfo? {
-        val style = runCatching {
+        val compat = runCatching {
             NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(n)
-        }.getOrNull() ?: return null
+        }.getOrNull()
 
-        val messages = runCatching {
-            style.messages.map { m ->
+        val compatMessages = runCatching {
+            compat?.messages.orEmpty().map { message ->
                 CompatMessage(
-                    text = m.text?.toString(),
-                    sender = m.person?.name?.toString(),
-                    timestamp = m.timestamp,
+                    text = message.text?.toString(),
+                    sender = message.person?.name?.toString(),
+                    timestamp = message.timestamp,
                 )
             }
-        }.getOrNull() ?: return null
+        }.getOrDefault(emptyList())
+
+        // Algunos builds de WhatsApp construyen MessagingStyle con la API del framework y
+        // NotificationCompat no logra reconstruirlo. Leemos android.messages como respaldo.
+        val messages = compatMessages.ifEmpty { frameworkMessages(n) }
+        if (compat == null && messages.isEmpty()) return null
+
+        val extras = n.extras
+        val conversationTitle = compat?.conversationTitle
+            ?: extras?.getCharSequence("android.conversationTitle")
+        val explicitGroup = compat?.isGroupConversation == true ||
+            extras?.getBoolean("android.isGroupConversation", false) == true
+        val normalizedTitle = conversationTitle?.toString()?.trim()
+        val inferredGroup = !normalizedTitle.isNullOrEmpty() && messages.any { message ->
+            !message.sender.isNullOrBlank() && !message.sender.equals(normalizedTitle, ignoreCase = true)
+        }
 
         return StyleInfo(
-            conversationTitle = style.conversationTitle,
-            isGroupConversation = style.isGroupConversation,
-            userName = style.user?.name,
+            conversationTitle = conversationTitle,
+            isGroupConversation = explicitGroup || inferredGroup,
+            userName = compat?.user?.name,
             messages = messages,
         )
     }
+
+    private fun frameworkMessages(n: android.app.Notification): List<CompatMessage> = runCatching {
+        val bundles = n.extras?.getParcelableArray(android.app.Notification.EXTRA_MESSAGES)
+        android.app.Notification.MessagingStyle.Message.getMessagesFromBundleArray(bundles)
+            .orEmpty()
+            .map { message ->
+                val sender = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                    message.senderPerson?.name
+                } else {
+                    @Suppress("DEPRECATION")
+                    message.sender
+                }
+                CompatMessage(
+                    text = message.text?.toString(),
+                    sender = sender?.toString(),
+                    timestamp = message.timestamp,
+                )
+            }
+    }.getOrDefault(emptyList())
 
     /** ¿La notificación trae acción de respuesta directa? (Fase 2: responder por voz) */
     fun hasRemoteInput(n: android.app.Notification): Boolean =

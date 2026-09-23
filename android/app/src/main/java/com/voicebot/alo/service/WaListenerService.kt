@@ -170,8 +170,15 @@ class WaListenerService : NotificationListenerService() {
         val whatsapp = active.filter { WhatsappPackages.isWhatsapp(it.packageName) }
         if (whatsapp.isEmpty()) return
         graph.eventLog.info("Sincronizando ${whatsapp.size} conversación(es) ya abiertas")
+        val now = System.currentTimeMillis()
         whatsapp.forEach { sbn ->
-            runCatching { NotificationSnapshot.from(sbn) }.getOrNull()?.let { process(it, live = false) }
+            runCatching { NotificationSnapshot.from(sbn) }.getOrNull()?.let { raw ->
+                // Si el fabricante desconectó el listener justo cuando llegó el mensaje, Android
+                // lo entrega al reconectar como notificación activa. Se habla solo si es reciente;
+                // las notificaciones antiguas se guardan silenciosamente como backfill.
+                val recent = raw.postedAt > 0L && now - raw.postedAt in 0..RECENT_BACKFILL_MS
+                process(raw, live = recent)
+            }
         }
     }
 
@@ -194,5 +201,6 @@ class WaListenerService : NotificationListenerService() {
     companion object {
         private const val TAG = "Alo/Listener"
         private const val WARMUP_TIMEOUT_MS = 5_000L
+        private const val RECENT_BACKFILL_MS = 30_000L
     }
 }

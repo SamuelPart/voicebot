@@ -24,6 +24,8 @@ data class RawNotification(
     /** Mensajes estructurados de MessagingStyle (la señal fuerte). */
     val messages: List<StyleMessage>,
     val hasRemoteInput: Boolean,
+    /** Momento en que Android publicó la notificación; permite recuperar mensajes recientes. */
+    val postedAt: Long = 0L,
 ) {
     data class StyleMessage(
         val text: String?,
@@ -60,6 +62,7 @@ object NotificationSnapshot {
                 RawNotification.StyleMessage(text = it.text, sender = it.sender, timestamp = it.timestamp)
             },
             hasRemoteInput = n.actions?.any { it.remoteInputs?.isNotEmpty() == true } == true,
+            postedAt = sbn.postTime,
         )
     }
 }

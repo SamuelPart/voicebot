@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Alo" parent="@android:style/Theme.DeviceDefault.DayNight.NoActionBar">
+    <!-- La plataforma no define Theme.DeviceDefault.DayNight.NoActionBar. Compose aplica
+         el modo claro/oscuro dentro de la actividad; aquí solo necesitamos quitar ActionBar. -->
+    <style name="Theme.Alo" parent="@android:style/Theme.DeviceDefault.NoActionBar">
         <item name="android:windowBackground">@color/alo_bg</item>
         <item name="android:enforceNavigationBarContrast">false</item>
         <item name="android:enforceStatusBarContrast">false</item>

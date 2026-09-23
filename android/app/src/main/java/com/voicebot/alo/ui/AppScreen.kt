@@ -91,6 +91,8 @@ fun AppScreen(
     onLanguageChange: (String) -> Unit,
     onRetentionChange: (Int) -> Unit,
     onQuietHoursChange: (Int?, Int?) -> Unit,
+    debugBuild: Boolean = false,
+    onToggleTestMode: (Boolean) -> Unit = {},
 ) {
     var tab by remember { mutableIntStateOf(0) }
     val tabs = listOf("En vivo", "Historial", "Revisar (${reviewQueue.size})", "Ajustes")
@@ -158,7 +160,20 @@ fun AppScreen(
                 0 -> LiveTab(stats, discardedCount, entries, isSpeaking, onSimulateMessage, onSimulateNoise, onStopReading)
                 1 -> HistoryTab(messages, onReplay, onReplayAll, onStopReading, onClearHistory)
                 2 -> ReviewTab(reviewQueue, onMarkReviewed)
-                else -> SettingsTab(settings, onOpenBatterySettings, onToggleVoice, onToggleGroups, onToggleHeadphones, onTogglePauseCalls, onToggleVibrate, onLanguageChange, onRetentionChange, onQuietHoursChange)
+                else -> SettingsTab(
+                    settings = settings,
+                    onOpenBatterySettings = onOpenBatterySettings,
+                    onToggleVoice = onToggleVoice,
+                    onToggleGroups = onToggleGroups,
+                    onToggleHeadphones = onToggleHeadphones,
+                    onTogglePauseCalls = onTogglePauseCalls,
+                    onToggleVibrate = onToggleVibrate,
+                    onLanguageChange = onLanguageChange,
+                    onRetentionChange = onRetentionChange,
+                    onQuietHoursChange = onQuietHoursChange,
+                    debugBuild = debugBuild,
+                    onToggleTestMode = onToggleTestMode,
+                )
             }
         }
     }
@@ -421,6 +436,8 @@ private fun SettingsTab(
     onLanguageChange: (String) -> Unit,
     onRetentionChange: (Int) -> Unit,
     onQuietHoursChange: (Int?, Int?) -> Unit,
+    debugBuild: Boolean,
+    onToggleTestMode: (Boolean) -> Unit,
 ) {
     Column(
         Modifier
@@ -433,6 +450,26 @@ private fun SettingsTab(
         ToggleRow("Solo con audífonos o Bluetooth", "Ideal para el auto o el trabajo", settings.onlyWithHeadphones, onToggleHeadphones)
         ToggleRow("Silencio durante llamadas", null, settings.pauseDuringCalls, onTogglePauseCalls)
         ToggleRow("Vibrar en vez de hablar", "Para reuniones", settings.vibrateInsteadOfSpeak, onToggleVibrate)
+
+        if (debugBuild) {
+            Spacer(Modifier.height(10.dp))
+            Card(colors = CardDefaults.cardColors(containerColor = AloColors.read.copy(alpha = 0.10f))) {
+                Column(Modifier.padding(12.dp)) {
+                    ToggleRow(
+                        title = "Modo prueba (solo debug)",
+                        subtitle = "Acepta notificaciones de adb (com.android.shell) para probar el filtro sin WhatsApp",
+                        checked = settings.testMode,
+                        onChange = onToggleTestMode,
+                    )
+                    Text(
+                        "Con esto activo puedes ejecutar: adb shell cmd notification post -S messaging " +
+                            "--conversation \"Mamá\" --message \"Mamá:hola\" prueba1 \"hola\"",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
 
         Spacer(Modifier.height(14.dp))
         SectionTitle("Idioma de la voz")

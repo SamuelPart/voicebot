@@ -43,6 +43,8 @@ android {
 
     buildFeatures {
         compose = true
+        // BuildConfig.DEBUG: se usa para mostrar el "Modo prueba" (notificaciones por adb) solo en debug.
+        buildConfig = true
     }
 
     packaging {

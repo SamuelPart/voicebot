@@ -9,6 +9,20 @@ Esqueleto funcional del lector de mensajes de WhatsApp en tiempo real: **captura
 
 ## 1. Abrirlo en Android Studio y ejecutarlo
 
+### Elige tu ruta
+
+| Ruta | Guía | Cuándo |
+|---|---|---|
+| **A · Android Studio** (recomendada para desarrollar) | [`GUIA-ANDROID-STUDIO-LINUX.md`](GUIA-ANDROID-STUDIO-LINUX.md) | Ver el código, panel Logcat, depurador, emulador |
+| **B · Terminal de Linux** (sin Studio) | [`COMANDOS-LINUX.md`](COMANDOS-LINUX.md) | Automatizar, servidores, o si prefieres la terminal |
+| **Atajos automáticos** (sirven en ambas) | `android/scripts/` — ver abajo | Instalar entorno, compilar, instalar, ver logs, simular WhatsApp |
+
+```bash
+cd voicebot/android
+chmod +x scripts/*.sh
+bash scripts/0-todo-en-uno.sh     # entorno + compilar + instalar + abrir, de una sola vez
+```
+
 ### Requisitos
 
 | Herramienta | Versión necesaria | Notas |
@@ -17,7 +31,10 @@ Esqueleto funcional del lector de mensajes de WhatsApp en tiempo real: **captura
 | JDK | **17 a 21** | Studio trae su propio JDK en *Settings → Build Tools → Gradle → Gradle JDK* |
 | Android SDK | **Platform 35** | Studio ofrece instalarlo solo al hacer *Sync* |
 | Gradle | **8.9 – 8.13** | ⚠️ **no uses Gradle 9.x**: AGP 8.7.3 necesita la serie 8 |
-| Dispositivo | Teléfono físico **con WhatsApp** o emulador | En un emulador sin WhatsApp solo funcionan los botones de prueba |
+| Dispositivo | Teléfono físico **con WhatsApp** o emulador | En un emulador sin WhatsApp solo funcionan las notificaciones de prueba por `adb` |
+
+> Las guías completas de instalación (incluido el emulador con KVM, el teléfono por Wi-Fi y los
+> errores típicos de Linux) están en los dos documentos de la tabla de arriba.
 
 ### Paso 1 — Wrapper de Gradle (la única pieza que falta en el repo)
 
@@ -202,6 +219,6 @@ gradle testDebugUnitTest
 *(Integración continua: copia `android/ci/github-workflow.yml` a `.github/workflows/android.yml`
 para que GitHub Actions ejecute los tests y compile el APK en cada push — ver instrucciones dentro del archivo.)*
 
-- `NotificationNormalizerTest` (20 casos): mensajes individuales y de grupo, solo mensajes nuevos, backup en curso, resumen de grupo, llamada perdida, estado, canal de multimedia, paquete ajeno, aviso de respaldo, código de verificación, “mensaje que suena a aviso” (no debe perderse), solo emojis, aviso de sistema dentro del chat, reemisión sin duplicar, mensaje nuevo sí procesado, buzón de revisión, chat silenciado, horario de silencio, solo con audífonos y pausa en llamadas.
-- `SpeechTextBuilderTest` (7 casos): plantillas individual/grupo, agrupación de varios mensajes, enlaces y emojis, recorte de mensajes largos.
+- `NotificationNormalizerTest` (23 casos): mensajes individuales y de grupo, solo mensajes nuevos, backup en curso, resumen de grupo, llamada perdida, estado, canal de multimedia, paquete ajeno, modo prueba por adb, aviso de respaldo, código de verificación, “mensaje que suena a aviso” (no debe perderse), solo emojis, aviso de sistema dentro del chat, mensajes propios, reemisión sin duplicar, mensaje nuevo sí procesado, buzón de revisión, chat silenciado, horario de silencio, solo con audífonos y pausa en llamadas.
+- `SpeechTextBuilderTest` (8 casos): plantillas individual/grupo, agrupación de varios mensajes, enlaces y emojis, recorte de mensajes largos, remitente desconocido (frase neutra).
 - `TextUtilsTest` (7 casos): normalización de acentos, patrones multilingües, hash estable, limpieza para voz, preview.

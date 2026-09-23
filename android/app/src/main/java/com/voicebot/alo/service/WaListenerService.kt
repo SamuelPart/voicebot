@@ -4,6 +4,7 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
 import com.voicebot.alo.AloApp
+import com.voicebot.alo.BuildConfig
 import com.voicebot.alo.core.filter.DeviceContextSnapshot
 import com.voicebot.alo.core.filter.NotificationSnapshot
 import com.voicebot.alo.core.filter.RawNotification
@@ -79,7 +80,8 @@ class WaListenerService : NotificationListenerService() {
         val raw = runCatching { NotificationSnapshot.from(notification) }.getOrNull() ?: return
 
         // Capa 0 antes de cualquier trabajo: si no es WhatsApp, no se procesa ni se registra.
-        if (!WhatsappPackages.isWhatsapp(raw.pkg)) return
+        if (!WhatsappPackages.isWhatsapp(raw.pkg) && !isTestPackage(raw.pkg)) return
+        debugLog("notificación de ${raw.pkg} · canal=${raw.channelId} · mensajes=${raw.messages.size}")
 
         scope.launch {
             runCatching {
@@ -87,6 +89,20 @@ class WaListenerService : NotificationListenerService() {
                 process(raw, live = true)
             }.onFailure { Log.w(TAG, "Error procesando notificación", it) }
         }
+    }
+
+    /** El "modo prueba" (solo debug) permite notificaciones publicadas por adb. */
+    private fun isTestPackage(pkg: String): Boolean =
+        BuildConfig.DEBUG && graph.settings.state.value.testMode && pkg == TEST_PACKAGE
+
+    private fun debugLog(message: String) {
+        if (BuildConfig.DEBUG) Log.d(TAG, message)
+    }
+
+    private fun describe(result: FilterResult): String = when (result) {
+        is FilterResult.Read -> "LEÍDO (${result.events.size} mensaje/s, speak=${result.speak})"
+        is FilterResult.Discarded -> "DESCARTADO (capa ${result.layer}: ${result.reason})"
+        is FilterResult.NeedsReview -> "A REVISAR (capa ${result.layer}: ${result.reason})"
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {
@@ -112,6 +128,7 @@ class WaListenerService : NotificationListenerService() {
             device = device,
             hourOfDay = LocalTime.now().hour,
         )
+        debugLog(describe(result))
 
         when (result) {
             is FilterResult.Read -> {
@@ -181,5 +198,6 @@ class WaListenerService : NotificationListenerService() {
     companion object {
         private const val TAG = "Alo/Listener"
         private const val WARMUP_TIMEOUT_MS = 5_000L
+        private const val TEST_PACKAGE = "com.android.shell"
     }
 }

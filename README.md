@@ -11,6 +11,9 @@ seguridad, resúmenes de “mensajes nuevos”, llamadas perdidas, estados, cód
 | [`PROPUESTA.md`](PROPUESTA.md) | Propuesta técnica y de producto completa: arquitectura, las 3 vías para leer WhatsApp (y por qué solo 2 son viables), filtro de 5 capas, motor de voz, modelo de negocio, roadmap de 90 días, riesgos y cumplimiento legal/Play Store. |
 | [`mockup/index.html`](mockup/index.html) | Mockup funcional: simula notificaciones reales y de ruido, muestra el registro del filtro en vivo y lee en voz alta con la voz del navegador. |
 | [`android/`](android/) | **Esqueleto Android del MVP (Fase 0)**: Kotlin + Compose, `NotificationListenerService`, motor de filtrado de 5 capas, cola de TTS con *ducking*, historial Room y buzón de revisión, con tests JVM. Ver [`android/README.md`](android/README.md). |
+| [`android/GUIA-ANDROID-STUDIO-LINUX.md`](android/GUIA-ANDROID-STUDIO-LINUX.md) | Guía paso a paso en español para Linux **con Android Studio**: instalación, abrir el proyecto, Logcat, emulador con KVM, teléfono por Wi-Fi y errores frecuentes. |
+| [`android/COMANDOS-LINUX.md`](android/COMANDOS-LINUX.md) | La misma guía **sin Android Studio**: todo por terminal (JDK, SDK, adb, Gradle, compilar, instalar, probar). |
+| [`android/scripts/`](android/scripts/) | Scripts automáticos: `1-instalar-entorno.sh`, `2-compilar-e-instalar.sh`, `3-ver-logs.sh`, `4-simular-whatsapp.sh` y el atajo `0-todo-en-uno.sh`. |
 
 ## La idea en una frase
 

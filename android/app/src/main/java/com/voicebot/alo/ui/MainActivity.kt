@@ -8,6 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.DisposableEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.voicebot.alo.BuildConfig
 import com.voicebot.alo.ui.theme.AloTheme
 
 class MainActivity : ComponentActivity() {
@@ -71,6 +72,8 @@ class MainActivity : ComponentActivity() {
                     onLanguageChange = viewModel::setLanguageTag,
                     onRetentionChange = viewModel::setRetentionDays,
                     onQuietHoursChange = viewModel::setQuietHours,
+                    debugBuild = BuildConfig.DEBUG,
+                    onToggleTestMode = viewModel::setTestMode,
                 )
             }
         }

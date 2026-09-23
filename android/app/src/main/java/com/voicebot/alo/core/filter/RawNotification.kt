@@ -45,7 +45,9 @@ object NotificationSnapshot {
             sbnKey = sbn.key.orEmpty(),
             channelId = NotificationExtras.channelId(n),
             category = n.category,
-            isOngoing = n.isOngoing || (n.flags and Notification.FLAG_ONGOING_EVENT) != 0,
+            // Notification.isOngoing() se añadió en API 31. Leer el flag funciona desde API 1
+            // y evita un NoSuchMethodError en el minSdk 26.
+            isOngoing = (n.flags and Notification.FLAG_ONGOING_EVENT) != 0,
             isGroupSummary = (n.flags and Notification.FLAG_GROUP_SUMMARY) != 0,
             title = extras?.getCharSequence(Notification.EXTRA_TITLE)?.toString(),
             text = extras?.getCharSequence(Notification.EXTRA_TEXT)?.toString(),

@@ -88,6 +88,10 @@ class AloSettings(context: Context) {
     fun setVibrateInsteadOfSpeak(enabled: Boolean) =
         prefs.edit().putBoolean(KEY_VIBRATE_INSTEAD, enabled).apply()
 
+    /** Solo tiene efecto en builds debug; la UI de release nunca expone este ajuste. */
+    fun setTestMode(enabled: Boolean) =
+        prefs.edit().putBoolean(KEY_TEST_MODE, enabled).apply()
+
     private fun load(): Snapshot = with(prefs) {
         Snapshot(
             voiceEnabled = getBoolean(KEY_VOICE, true),
@@ -101,6 +105,7 @@ class AloSettings(context: Context) {
             retentionDays = getInt(KEY_RETENTION, 30),
             maxCharsPerMessage = getInt(KEY_MAX_CHARS, 320),
             vibrateInsteadOfSpeak = getBoolean(KEY_VIBRATE_INSTEAD, false),
+            testMode = getBoolean(KEY_TEST_MODE, false),
         )
     }
 

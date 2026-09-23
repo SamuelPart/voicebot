@@ -4,7 +4,10 @@
       La interfaz es 100 % Compose: no hace falta un tema de Material Components,
       basta un tema de plataforma sin ActionBar para evitar destellos blancos al abrir.
     -->
-    <style name="Theme.Alo" parent="@android:style/Theme.DeviceDefault.NoActionBar">
+    <style name="Theme.Alo" parent="@android:style/Theme.DeviceDefault.Light.NoActionBar">
         <item name="android:windowBackground">@color/alo_bg</item>
+        <item name="android:statusBarColor">@color/alo_bg</item>
+        <item name="android:navigationBarColor">@color/alo_bg</item>
+        <item name="android:windowLightStatusBar">true</item>
     </style>
 </resources>

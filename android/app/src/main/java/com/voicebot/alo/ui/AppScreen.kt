@@ -40,6 +40,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -48,6 +49,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -100,9 +102,13 @@ fun AppScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground,
+                ),
                 title = {
                     Column {
-                        Text("Aló", fontWeight = FontWeight.Bold)
+                        Text("Aló", style = MaterialTheme.typography.headlineSmall)
                         Text(
                             text = if (permissionGranted) {
                                 "${stats.captured} capturados · ${stats.discarded} descartados"
@@ -123,6 +129,7 @@ fun AppScreen(
                 },
             )
         },
+        containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         Column(
             modifier = Modifier
@@ -146,12 +153,37 @@ fun AppScreen(
                 }
             }
 
-            TabRow(selectedTabIndex = tab) {
+            TabRow(
+                selectedTabIndex = tab,
+                modifier = Modifier
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                    .clip(RoundedCornerShape(10.dp)),
+                containerColor = MaterialTheme.colorScheme.outlineVariant,
+                contentColor = MaterialTheme.colorScheme.onSurface,
+                indicator = {},
+                divider = {},
+            ) {
                 tabs.forEachIndexed { index, title ->
+                    val selected = tab == index
                     Tab(
-                        selected = tab == index,
+                        selected = selected,
                         onClick = { tab = index },
-                        text = { Text(title, fontSize = 12.sp) },
+                        modifier = Modifier
+                            .padding(2.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(
+                                if (selected) MaterialTheme.colorScheme.surface
+                                else Color.Transparent,
+                            ),
+                        text = {
+                            Text(
+                                title,
+                                fontSize = 11.sp,
+                                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                                color = if (selected) MaterialTheme.colorScheme.onSurface
+                                else MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        },
                     )
                 }
             }

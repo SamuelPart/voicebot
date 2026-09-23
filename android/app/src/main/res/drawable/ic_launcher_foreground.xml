@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Burbuja de chat con ondas de sonido: "leer mensajes en voz alta". -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#25D366"
+        android:pathData="M34,32 h32 a8,8 0 0 1 8,8 v18 a8,8 0 0 1 -8,8 h-16 l-10,9 v-9 h-6 a8,8 0 0 1 -8,-8 v-18 a8,8 0 0 1 8,-8 z" />
+    <path
+        android:fillColor="#04170D"
+        android:pathData="M44,44 h20 v4 h-20 z M44,52 h14 v4 h-14 z" />
+    <path
+        android:fillColor="#4D9FFF"
+        android:pathData="M78,46 h3 v4 h-3 z M84,43 h3 v10 h-3 z M90,40 h3 v16 h-3 z" />
+</vector>

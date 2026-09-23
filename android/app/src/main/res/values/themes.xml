@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      La interfaz es 100 % Compose: no hace falta un tema de Material Components,
+      basta un tema de plataforma sin ActionBar para evitar destellos blancos al abrir.
+    -->
+    <style name="Theme.Alo" parent="@android:style/Theme.DeviceDefault.NoActionBar">
+        <item name="android:windowBackground">@color/alo_bg</item>
+    </style>
+</resources>

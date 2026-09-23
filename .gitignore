@@ -1,0 +1,21 @@
+# Android / Gradle
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+android/captures/
+android/.kotlin/
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+
+# Entornos y editores
+.env
+.env.*
+.DS_Store
+*.iml
+.idea/
+*.log

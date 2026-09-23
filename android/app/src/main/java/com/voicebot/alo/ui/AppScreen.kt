@@ -93,8 +93,7 @@ fun AppScreen(
     onLanguageChange: (String) -> Unit,
     onRetentionChange: (Int) -> Unit,
     onQuietHoursChange: (Int?, Int?) -> Unit,
-    debugBuild: Boolean = false,
-    onToggleTestMode: (Boolean) -> Unit = {},
+    onAppearanceModeChange: (AloSettings.AppearanceMode) -> Unit,
 ) {
     var tab by remember { mutableIntStateOf(0) }
     val tabs = listOf("En vivo", "Historial", "Revisar (${reviewQueue.size})", "Ajustes")
@@ -203,8 +202,7 @@ fun AppScreen(
                     onLanguageChange = onLanguageChange,
                     onRetentionChange = onRetentionChange,
                     onQuietHoursChange = onQuietHoursChange,
-                    debugBuild = debugBuild,
-                    onToggleTestMode = onToggleTestMode,
+                    onAppearanceModeChange = onAppearanceModeChange,
                 )
             }
         }
@@ -468,8 +466,7 @@ private fun SettingsTab(
     onLanguageChange: (String) -> Unit,
     onRetentionChange: (Int) -> Unit,
     onQuietHoursChange: (Int?, Int?) -> Unit,
-    debugBuild: Boolean,
-    onToggleTestMode: (Boolean) -> Unit,
+    onAppearanceModeChange: (AloSettings.AppearanceMode) -> Unit,
 ) {
     Column(
         Modifier
@@ -483,23 +480,17 @@ private fun SettingsTab(
         ToggleRow("Silencio durante llamadas", null, settings.pauseDuringCalls, onTogglePauseCalls)
         ToggleRow("Vibrar en vez de hablar", "Para reuniones", settings.vibrateInsteadOfSpeak, onToggleVibrate)
 
-        if (debugBuild) {
-            Spacer(Modifier.height(10.dp))
-            Card(colors = CardDefaults.cardColors(containerColor = AloColors.read.copy(alpha = 0.10f))) {
-                Column(Modifier.padding(12.dp)) {
-                    ToggleRow(
-                        title = "Modo prueba (solo debug)",
-                        subtitle = "Acepta notificaciones de adb (com.android.shell) para probar el filtro sin WhatsApp",
-                        checked = settings.testMode,
-                        onChange = onToggleTestMode,
-                    )
-                    Text(
-                        "Con esto activo puedes ejecutar: adb shell cmd notification post -S messaging " +
-                            "--conversation \"Mamá\" --message \"Mamá:hola\" prueba1 \"hola\"",
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+        Spacer(Modifier.height(14.dp))
+        SectionTitle("Apariencia")
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ChoiceChip("Dispositivo", settings.appearanceMode == AloSettings.AppearanceMode.SYSTEM) {
+                onAppearanceModeChange(AloSettings.AppearanceMode.SYSTEM)
+            }
+            ChoiceChip("Claro", settings.appearanceMode == AloSettings.AppearanceMode.LIGHT) {
+                onAppearanceModeChange(AloSettings.AppearanceMode.LIGHT)
+            }
+            ChoiceChip("Oscuro", settings.appearanceMode == AloSettings.AppearanceMode.DARK) {
+                onAppearanceModeChange(AloSettings.AppearanceMode.DARK)
             }
         }
 

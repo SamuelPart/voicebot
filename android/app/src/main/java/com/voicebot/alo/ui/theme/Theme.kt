@@ -1,9 +1,11 @@
 package com.voicebot.alo.ui.theme
 
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -12,6 +14,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.voicebot.alo.core.settings.AloSettings
 
 /** Paleta clara, sobria y de alto contraste inspirada en interfaces de iOS. */
 private val LightColors = lightColorScheme(
@@ -31,6 +34,25 @@ private val LightColors = lightColorScheme(
     outline = Color(0xFFD1D1D6),
     outlineVariant = Color(0xFFE5E5EA),
     error = Color(0xFFFF3B30),
+    onError = Color.White,
+)
+
+private val DarkColors = darkColorScheme(
+    primary = Color(0xFF0A84FF),
+    onPrimary = Color.White,
+    primaryContainer = Color(0xFF163A5F),
+    onPrimaryContainer = Color(0xFFD9EAFF),
+    secondary = Color(0xFF30D158),
+    tertiary = Color(0xFFFF9F0A),
+    background = Color(0xFF000000),
+    onBackground = Color(0xFFF2F2F7),
+    surface = Color(0xFF1C1C1E),
+    onSurface = Color(0xFFF2F2F7),
+    surfaceVariant = Color(0xFF2C2C2E),
+    onSurfaceVariant = Color(0xFFAEAEB2),
+    outline = Color(0xFF48484A),
+    outlineVariant = Color(0xFF2C2C2E),
+    error = Color(0xFFFF453A),
     onError = Color.White,
 )
 
@@ -69,11 +91,17 @@ private val AloShapes = Shapes(
 )
 
 @Composable
-fun AloTheme(content: @Composable () -> Unit) {
-    // Aló usa deliberadamente una apariencia clara y constante. Además de ser más legible
-    // durante la conducción, evita que cada fabricante altere el contraste de los estados.
+fun AloTheme(
+    appearanceMode: AloSettings.AppearanceMode = AloSettings.AppearanceMode.SYSTEM,
+    content: @Composable () -> Unit,
+) {
+    val dark = when (appearanceMode) {
+        AloSettings.AppearanceMode.SYSTEM -> isSystemInDarkTheme()
+        AloSettings.AppearanceMode.LIGHT -> false
+        AloSettings.AppearanceMode.DARK -> true
+    }
     MaterialTheme(
-        colorScheme = LightColors,
+        colorScheme = if (dark) DarkColors else LightColors,
         typography = AloTypography,
         shapes = AloShapes,
         content = content,

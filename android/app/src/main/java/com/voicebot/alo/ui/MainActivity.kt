@@ -5,10 +5,13 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.luminance
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.voicebot.alo.BuildConfig
 import com.voicebot.alo.ui.theme.AloTheme
 
 class MainActivity : ComponentActivity() {
@@ -17,19 +20,26 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            AloTheme {
-                val viewModel: MainViewModel = viewModel()
-                val state = viewModel.permissionGranted.collectAsStateWithLifecycle()
-                val settings = viewModel.settings.collectAsStateWithLifecycle()
-                val entries = viewModel.logEntries.collectAsStateWithLifecycle()
-                val stats = viewModel.stats.collectAsStateWithLifecycle()
-                val messages = viewModel.messages.collectAsStateWithLifecycle()
-                val review = viewModel.reviewQueue.collectAsStateWithLifecycle()
-                val banner = viewModel.banner.collectAsStateWithLifecycle()
-                val speaking = viewModel.speaking.collectAsStateWithLifecycle()
-                val discarded = viewModel.discardedCount.collectAsStateWithLifecycle()
+            val viewModel: MainViewModel = viewModel()
+            val state = viewModel.permissionGranted.collectAsStateWithLifecycle()
+            val settings = viewModel.settings.collectAsStateWithLifecycle()
+            val entries = viewModel.logEntries.collectAsStateWithLifecycle()
+            val stats = viewModel.stats.collectAsStateWithLifecycle()
+            val messages = viewModel.messages.collectAsStateWithLifecycle()
+            val review = viewModel.reviewQueue.collectAsStateWithLifecycle()
+            val banner = viewModel.banner.collectAsStateWithLifecycle()
+            val speaking = viewModel.speaking.collectAsStateWithLifecycle()
+            val discarded = viewModel.discardedCount.collectAsStateWithLifecycle()
 
-                // Al volver de los ajustes de Android, refrescamos el estado del permiso.
+            AloTheme(appearanceMode = settings.value.appearanceMode) {
+                val lightSystemBars = MaterialTheme.colorScheme.background.luminance() > 0.5f
+                SideEffect {
+                    WindowCompat.getInsetsController(window, window.decorView).apply {
+                        isAppearanceLightStatusBars = lightSystemBars
+                        isAppearanceLightNavigationBars = lightSystemBars
+                    }
+                }
+
                 DisposableEffect(Unit) {
                     viewModel.refreshPermission()
                     onDispose { }
@@ -47,9 +57,7 @@ class MainActivity : ComponentActivity() {
                     banner = banner.value,
                     onOpenPermissionSettings = {
                         runCatching {
-                            startActivity(
-                                Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
-                            )
+                            startActivity(Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
                         }
                         viewModel.refreshPermission()
                     },
@@ -72,8 +80,7 @@ class MainActivity : ComponentActivity() {
                     onLanguageChange = viewModel::setLanguageTag,
                     onRetentionChange = viewModel::setRetentionDays,
                     onQuietHoursChange = viewModel::setQuietHours,
-                    debugBuild = BuildConfig.DEBUG,
-                    onToggleTestMode = viewModel::setTestMode,
+                    onAppearanceModeChange = viewModel::setAppearanceMode,
                 )
             }
         }

@@ -80,7 +80,7 @@ class WaListenerService : NotificationListenerService() {
         val raw = runCatching { NotificationSnapshot.from(notification) }.getOrNull() ?: return
 
         // Capa 0 antes de cualquier trabajo: si no es WhatsApp, no se procesa ni se registra.
-        if (!WhatsappPackages.isWhatsapp(raw.pkg) && !isTestPackage(raw.pkg)) return
+        if (!WhatsappPackages.isWhatsapp(raw.pkg)) return
         debugLog("notificación de ${raw.pkg} · canal=${raw.channelId} · mensajes=${raw.messages.size}")
 
         scope.launch {
@@ -90,10 +90,6 @@ class WaListenerService : NotificationListenerService() {
             }.onFailure { Log.w(TAG, "Error procesando notificación", it) }
         }
     }
-
-    /** El "modo prueba" (solo debug) permite notificaciones publicadas por adb. */
-    private fun isTestPackage(pkg: String): Boolean =
-        BuildConfig.DEBUG && graph.settings.state.value.testMode && pkg == TEST_PACKAGE
 
     private fun debugLog(message: String) {
         if (BuildConfig.DEBUG) Log.d(TAG, message)
@@ -198,6 +194,5 @@ class WaListenerService : NotificationListenerService() {
     companion object {
         private const val TAG = "Alo/Listener"
         private const val WARMUP_TIMEOUT_MS = 5_000L
-        private const val TEST_PACKAGE = "com.android.shell"
     }
 }

@@ -14,6 +14,8 @@ import kotlinx.coroutines.flow.asStateFlow
  */
 class AloSettings(context: Context) {
 
+    enum class AppearanceMode { SYSTEM, LIGHT, DARK }
+
     data class Snapshot(
         val voiceEnabled: Boolean = true,
         val languageTag: String = "es-PE",
@@ -26,12 +28,7 @@ class AloSettings(context: Context) {
         val retentionDays: Int = 30,
         val maxCharsPerMessage: Int = 320,
         val vibrateInsteadOfSpeak: Boolean = false,
-        /**
-         * Modo prueba (solo builds de debug): acepta también las notificaciones de `com.android.shell`,
-         * que es el paquete desde el que se publican con `adb shell cmd notification post`.
-         * Permite validar el pipeline completo por terminal sin depender de WhatsApp.
-         */
-        val testMode: Boolean = false,
+        val appearanceMode: AppearanceMode = AppearanceMode.SYSTEM,
     )
 
     private val prefs: SharedPreferences =
@@ -88,9 +85,8 @@ class AloSettings(context: Context) {
     fun setVibrateInsteadOfSpeak(enabled: Boolean) =
         prefs.edit().putBoolean(KEY_VIBRATE_INSTEAD, enabled).apply()
 
-    /** Solo tiene efecto en builds debug; la UI de release nunca expone este ajuste. */
-    fun setTestMode(enabled: Boolean) =
-        prefs.edit().putBoolean(KEY_TEST_MODE, enabled).apply()
+    fun setAppearanceMode(mode: AppearanceMode) =
+        prefs.edit().putString(KEY_APPEARANCE, mode.name).apply()
 
     private fun load(): Snapshot = with(prefs) {
         Snapshot(
@@ -105,7 +101,9 @@ class AloSettings(context: Context) {
             retentionDays = getInt(KEY_RETENTION, 30),
             maxCharsPerMessage = getInt(KEY_MAX_CHARS, 320),
             vibrateInsteadOfSpeak = getBoolean(KEY_VIBRATE_INSTEAD, false),
-            testMode = getBoolean(KEY_TEST_MODE, false),
+            appearanceMode = runCatching {
+                AppearanceMode.valueOf(getString(KEY_APPEARANCE, AppearanceMode.SYSTEM.name).orEmpty())
+            }.getOrDefault(AppearanceMode.SYSTEM),
         )
     }
 
@@ -124,7 +122,7 @@ class AloSettings(context: Context) {
         private const val KEY_RETENTION = "retention_days"
         private const val KEY_MAX_CHARS = "max_chars"
         private const val KEY_VIBRATE_INSTEAD = "vibrate_instead"
-        private const val KEY_TEST_MODE = "test_mode"
+        private const val KEY_APPEARANCE = "appearance_mode"
         private const val VALUE_NONE = -1
     }
 }

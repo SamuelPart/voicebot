@@ -162,7 +162,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setQuietHours(start: Int?, end: Int?) = graph.settings.setQuietHours(start, end)
 
-    fun setTestMode(enabled: Boolean) = graph.settings.setTestMode(enabled)
+    fun setAppearanceMode(mode: AloSettings.AppearanceMode) = graph.settings.setAppearanceMode(mode)
 
     fun muteChat(chatId: String, muted: Boolean) = graph.settings.setMuted(chatId, muted)
 

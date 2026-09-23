@@ -219,5 +219,7 @@ Las notificaciones de WhatsApp exponen la acción *Responder* con `RemoteInput`.
 
 Siguiente paso concreto: puedo dejar armado en este repositorio el **esqueleto Android del MVP** (`NotificationListenerService` + motor de filtrado + cola de TTS + panel Compose) para que Fase 0 arranque esta semana.
 
+> **Estado:** el esqueleto de la Fase 0 ya está en [`android/`](android/) — captura en tiempo real, filtro de 5 capas con tests JVM, cola TTS con *ducking*, historial Room, buzón de revisión y panel Compose. Ver [`android/README.md`](android/README.md) para compilarlo, los criterios de salida medibles y las decisiones técnicas.
+
 ---
 *Documento preparado para el proyecto `voicebot`. Las cifras de costo y plazos son estimaciones de planificación, no presupuestos cerrados.*

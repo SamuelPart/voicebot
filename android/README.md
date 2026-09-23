@@ -33,6 +33,12 @@ bash scripts/0-todo-en-uno.sh     # entorno + compilar + instalar + abrir, de un
 | Gradle | **8.9 – 8.13** | ⚠️ **no uses Gradle 9.x**: AGP 8.7.3 necesita la serie 8 |
 | Dispositivo | Teléfono físico **con WhatsApp** o emulador | En un emulador sin WhatsApp solo funcionan las notificaciones de prueba por `adb` |
 
+> **¿Primera vez?** El proyecto vive en GitHub (repositorio privado) y el código está en la rama
+> `arena/01a0cbd4-voicebot`. Empieza por la **sección 0** de
+> [`GUIA-ANDROID-STUDIO-LINUX.md`](GUIA-ANDROID-STUDIO-LINUX.md): explica las 4 formas de traerlo a tu PC
+> (fusionar el PR, clonar la rama, descargar el ZIP o clonar desde el propio Android Studio) y cómo
+> autenticarse en un repositorio privado.
+
 > Las guías completas de instalación (incluido el emulador con KVM, el teléfono por Wi-Fi y los
 > errores típicos de Linux) están en los dos documentos de la tabla de arriba.
 

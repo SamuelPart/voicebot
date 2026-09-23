@@ -8,7 +8,160 @@ abrir el proyecto, ejecutarlo en tu teléfono y probar el lector de WhatsApp.
 
 ---
 
-## 0. Elige tu ruta
+## 0. Traer el proyecto a tu PC y abrirlo en Android Studio
+
+El proyecto vive en GitHub: **`https://github.com/SamuelPart/voicebot`** (⚠️ es un repositorio
+**privado**, así que hay que autenticarse). El código está en la rama
+**`arena/01a0cbd4-voicebot`**, no en `main`: `main` todavía solo tiene el README, salvo que
+fusiones el PR indicado abajo.
+
+### Elige cómo traerlo (de más simple a más manual)
+
+| # | Ruta | Necesitas | Ventaja |
+|---|---|---|---|
+| **A** | Fusionar el PR y clonar `main` | navegador + git | Deja todo en la rama principal: los clones siguientes son directos |
+| **B** | Clonar y cambiar a la rama | git + autenticación | Sin fusionar nada; ves el código tal cual |
+| **C** | Descargar el ZIP desde el navegador | solo el navegador | No instalas git ni configuras tokens |
+| **D** | Clonar **desde dentro** de Android Studio | Studio | Es literalmente “subir el proyecto a Android Studio” |
+
+---
+
+### Ruta A — Fusionar el PR #1 y clonar `main` (recomendada)
+
+1. Abre **https://github.com/SamuelPart/voicebot/pull/1** en el navegador.
+2. Botón verde **“Merge pull request” → “Confirm merge”**. Con esto, `main` ya contiene todo.
+3. En tu terminal:
+
+```bash
+cd ~                     # o donde quieras tener el proyecto
+git clone https://github.com/SamuelPart/voicebot.git
+cd voicebot
+ls                       # debes ver: PROPUESTA.md  README.md  android/  mockup/
+```
+
+### Ruta B — Clonar y cambiar a la rama (sin fusionar)
+
+```bash
+cd ~
+git clone https://github.com/SamuelPart/voicebot.git
+cd voicebot
+git checkout arena/01a0cbd4-voicebot     # ← imprescindible: ahí está el código
+
+# o en un solo paso:
+git clone -b arena/01a0cbd4-voicebot https://github.com/SamuelPart/voicebot.git
+
+ls                                      # PROPUESTA.md  README.md  android/  mockup/
+```
+
+> Si clonas y ves solo `README.md`, estás en `main`: ejecuta `git checkout arena/01a0cbd4-voicebot`.
+
+### Ruta C — Descargar el ZIP (sin git)
+
+1. Entra en el repositorio con tu cuenta de GitHub (es privado: si no has iniciado sesión, verás 404).
+2. Cambia de rama con el selector de la izquierda: **`arena/01a0cbd4-voicebot`**.
+3. Botón verde **`Code` → `Download ZIP`** → guarda y descomprime:
+
+```bash
+cd ~/Descargas
+unzip voicebot-arena-01a0cbd4-voicebot.zip -d ~/proyectos
+ls ~/proyectos/voicebot-arena-01a0cbd4-voicebot
+```
+
+### Ruta D — Clonar desde Android Studio (la más directa si ya tienes Studio)
+
+1. Abre Android Studio → pantalla de bienvenida → **`Get from VCS`**
+   (o con un proyecto abierto: `File → New → Project from Version Control…`).
+2. Rellena:
+   - **URL**: `https://github.com/SamuelPart/voicebot.git`
+   - **Directory**: `~/proyectos/voicebot`
+   - **Branch** (si el diálogo lo ofrece): `arena/01a0cbd4-voicebot`
+3. `Clone`. Si el repositorio es privado, Studio pedirá autenticación: usa
+   `Settings → Version Control → GitHub → Add account` (o *Log in with token*).
+4. Si no elegiste la rama al clonar, cámbiala después: ventana **Git** (`Alt+9`) → clic derecho en
+   `origin/arena/01a0cbd4-voicebot` → **Checkout**.
+
+⚠️ Si clonas desde Studio, la carpeta que clonas es **la raíz del repositorio**: después debes abrir
+la subcarpeta `android` (ver la sección «Abrir el proyecto»). No la confundas con la raíz.
+
+---
+
+### Autenticación del repositorio privado (para las rutas A, B y D)
+
+Elige **una** vía:
+
+```bash
+# 1) GitHub CLI (la más cómoda: abre el navegador y guarda las credenciales)
+sudo apt install -y gh          # o: sudo snap install gh
+gh auth login                   # elige: GitHub.com → HTTPS → Login with a web browser
+gh repo clone SamuelPart/voicebot
+
+# 2) Clave SSH (si ya usas SSH con GitHub)
+ssh-keygen -t ed25519 -C "tu-correo@ejemplo.com"     # si aún no tienes clave
+cat ~/.ssh/id_ed25519.pub                            # pégala en GitHub → Settings → SSH keys
+git clone git@github.com:SamuelPart/voicebot.git
+
+# 3) Token de acceso personal (PAT)
+#    GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)
+#    → Generate new token → marca el permiso "repo" → copia el token
+git clone https://TU_USUARIO:TU_TOKEN@github.com/SamuelPart/voicebot.git
+```
+
+> **Nunca me pegues el token aquí en el chat.** Si lo haces por error, revócalo en GitHub y generas otro.
+
+---
+
+### Mantenerte al día con los cambios que yo haga
+
+Yo sigo trabajando en la rama `arena/01a0cbd4-voicebot` de este mismo repositorio. Cuando quieras
+traer lo último a tu PC:
+
+```bash
+# Si estás en la rama (ruta B/D):
+cd ~/voicebot && git pull origin arena/01a0cbd4-voicebot
+
+# Si fusionaste el PR (ruta A): yo abriré un PR nuevo con cada tanda de cambios.
+# Entra a GitHub, revisa el PR y pulsa "Merge"; después:
+cd ~/voicebot && git pull
+```
+
+Con Android Studio abierto, tras hacer `git pull` pulsa **Sync Project with Gradle Files** para que
+tome los archivos nuevos.
+
+> Si usaste la ruta C (ZIP), no tendrás `git`: para actualizar, descarga el ZIP otra vez sobre una
+> carpeta nueva y copia solo lo que necesites (`android/app/src`, `android/scripts`).
+
+---
+
+### Verificación rápida (antes de abrir Studio)
+
+```bash
+cd ~/voicebot/android
+ls
+# Esperado:  app/  build.gradle.kts  gradle/  gradle.properties  README.md  scripts/  settings.gradle.kts
+#            COMANDOS-LINUX.md  GUIA-ANDROID-STUDIO-LINUX.md  ci/
+ls app/src/main/java/com/voicebot/alo
+# Esperado:  AloApp.kt  core/  data/  di/  service/  ui/  voice/
+```
+
+Comprobaciones útiles:
+
+```bash
+git log --oneline -3          # debe mostrar los commits del MVP (no solo "Initial commit")
+git status                    # debe decir "nothing to commit, working tree clean"
+java -version                 # 17 o superior
+adb version                   # si aún no lo tienes, lo instala la sección 2
+```
+
+### Ya con el proyecto en tu PC
+
+Sigue las secciones siguientes de esta guía: **instalar/verificar Android Studio (1)**, **primer
+arranque (2)** y —lo más importante— **abrir la carpeta `android/`, nunca la raíz del repositorio (3)**.
+
+Si algo no cuadra, dime en qué punto y qué mensaje exacto ves en pantalla, y lo resolvemos.
+
+---
+
+## 1. Elige tu ruta
 
 | | **Ruta A · Android Studio** | **Ruta B · Terminal pura** |
 |---|---|---|
@@ -32,7 +185,7 @@ bash scripts/0-todo-en-uno.sh           # todo lo anterior de una vez
 
 ---
 
-## 1. Instalar Android Studio en Linux
+## 2. Instalar Android Studio en Linux
 
 Elige **una** de las tres vías. Recomendación: **snap** (se actualiza sola y es la más simple) o el
 **tarball oficial** (máximo control). Flatpak funciona, pero tiene más roces con `adb`, `/dev/kvm` y
@@ -93,7 +246,7 @@ sudo dnf install -y java-17-openjdk-devel unzip curl wget android-tools
 
 ---
 
-## 2. Primer arranque de Android Studio
+## 3. Primer arranque de Android Studio
 
 1. **Setup Wizard** → elige **Standard** → acepta las licencias. Descargará el SDK en
    `~/Android/Sdk` (~2–3 GB). Es normal que tarde.
@@ -106,7 +259,7 @@ sudo dnf install -y java-17-openjdk-devel unzip curl wget android-tools
 
 ---
 
-## 3. Abrir el proyecto
+## 4. Abrir el proyecto
 
 **Abre la carpeta `android/`, NO la raíz del repositorio** (la raíz no es un proyecto Gradle):
 
@@ -141,7 +294,7 @@ Kotlin 2.0.21, Compose (BOM 2024.12.01) y Room: **5–10 minutos** con internet.
 
 ---
 
-## 4. Conectar el teléfono (o usar un emulador)
+## 5. Conectar el teléfono (o usar un emulador)
 
 ### Teléfono físico por USB
 
@@ -190,11 +343,11 @@ Crear el dispositivo en Studio: `Tools → Device Manager → Create Device` →
 **API 35 (Google APIs)** → Finish.
 
 > En el emulador **no hay WhatsApp**: sirve para validar filtro, voz e interfaz con el **Modo prueba**
-> (sección 6). Para mensajes reales, teléfono físico.
+> (sección 7). Para mensajes reales, teléfono físico.
 
 ---
 
-## 5. Ejecutar la app
+## 6. Ejecutar la app
 
 1. Elige el dispositivo en la barra superior (teléfono o emulador).
 2. Pulsa **▶ Run** (`Shift+F10`) o el martillo **Build → Make Project** (`Ctrl+F9`) si solo quieres compilar.
@@ -210,7 +363,7 @@ gradle installDebug
 
 ---
 
-## 6. Activar la escucha y probar (lo importante)
+## 7. Activar la escucha y probar (lo importante)
 
 ### a) Conceder el acceso a notificaciones
 
@@ -283,7 +436,7 @@ Etiquetas disponibles: `Alo/Listener`, `Alo/Voice`, `Alo/TTS`, `Alo/Reply`.
 
 ---
 
-## 7. Ejecutar los tests desde Studio
+## 8. Ejecutar los tests desde Studio
 
 - Interfaz: abre `app/src/test/java/…/NotificationNormalizerTest.kt` y pulsa ▶ junto a la clase.
 - Terminal (dentro de Studio, `Alt+F12`): `gradle testDebugUnitTest`
@@ -292,7 +445,7 @@ Etiquetas disponibles: `Alo/Listener`, `Alo/Voice`, `Alo/TTS`, `Alo/Reply`.
 
 ---
 
-## 8. Diferencias y detalles propios de Linux
+## 9. Diferencias y detalles propios de Linux
 
 | Tema | Detalle |
 |---|---|
@@ -306,7 +459,7 @@ Etiquetas disponibles: `Alo/Listener`, `Alo/Voice`, `Alo/TTS`, `Alo/Reply`.
 
 ---
 
-## 9. Errores frecuentes (Android Studio en Linux) y solución
+## 10. Errores frecuentes (Android Studio en Linux) y solución
 
 | Mensaje | Causa | Solución |
 |---|---|---|
@@ -318,7 +471,7 @@ Etiquetas disponibles: `Alo/Listener`, `Alo/Voice`, `Alo/TTS`, `Alo/Reply`.
 | `OutOfMemoryError` al compilar | Poca RAM | `android/gradle.properties` → `org.gradle.jvmargs=-Xmx2048m` |
 | `adb: no permissions` / `sin permisos` | Reglas udev | `android-sdk-platform-tools-common` + **reiniciar sesión** |
 | Emulador: `KVM is required` | Sin virtualización | Actívala en la BIOS/UEFI, instala `qemu-kvm`, añade tu usuario al grupo `kvm` |
-| La app no lee nada | Permiso o batería | Sección 6.a y quitar la optimización de batería |
+| La app no lee nada | Permiso o batería | Sección 7.a y quitar la optimización de batería |
 | `Unresolved reference: Icons` / `enableEdgeToEdge` | Sincronización a medias | *Build → Clean Project* + *Sync*; verifica que bajaron `material-icons-core`, `activity-compose` y `lifecycle` |
 | `Room - Schema export directory was not provided` | Aviso esperado | Es intencional (`exportSchema = false`) |
 
@@ -326,7 +479,7 @@ Si aparece cualquier otro error: **copia el texto completo de la pestaña Build 
 
 ---
 
-## 10. Resumen en 10 líneas
+## 11. Resumen en 11 líneas
 
 ```bash
 sudo snap install android-studio --classic          # 1. instalar Studio

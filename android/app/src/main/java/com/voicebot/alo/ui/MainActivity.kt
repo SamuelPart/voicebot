@@ -1,14 +1,23 @@
 package com.voicebot.alo.ui
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.luminance
+import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.voicebot.alo.BuildConfig
 import com.voicebot.alo.ui.theme.AloTheme
 
 class MainActivity : ComponentActivity() {
@@ -17,19 +26,31 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            AloTheme {
-                val viewModel: MainViewModel = viewModel()
-                val state = viewModel.permissionGranted.collectAsStateWithLifecycle()
-                val settings = viewModel.settings.collectAsStateWithLifecycle()
-                val entries = viewModel.logEntries.collectAsStateWithLifecycle()
-                val stats = viewModel.stats.collectAsStateWithLifecycle()
-                val messages = viewModel.messages.collectAsStateWithLifecycle()
-                val review = viewModel.reviewQueue.collectAsStateWithLifecycle()
-                val banner = viewModel.banner.collectAsStateWithLifecycle()
-                val speaking = viewModel.speaking.collectAsStateWithLifecycle()
-                val discarded = viewModel.discardedCount.collectAsStateWithLifecycle()
+            val viewModel: MainViewModel = viewModel()
+            val state = viewModel.permissionGranted.collectAsStateWithLifecycle()
+            val settings = viewModel.settings.collectAsStateWithLifecycle()
+            val entries = viewModel.logEntries.collectAsStateWithLifecycle()
+            val stats = viewModel.stats.collectAsStateWithLifecycle()
+            val messages = viewModel.messages.collectAsStateWithLifecycle()
+            val review = viewModel.reviewQueue.collectAsStateWithLifecycle()
+            val banner = viewModel.banner.collectAsStateWithLifecycle()
+            val speaking = viewModel.speaking.collectAsStateWithLifecycle()
+            val discarded = viewModel.discardedCount.collectAsStateWithLifecycle()
+            val notificationPermission = rememberLauncherForActivityResult(
+                ActivityResultContracts.RequestPermission(),
+            ) { granted ->
+                viewModel.setProtectionEnabled(granted)
+            }
 
-                // Al volver de los ajustes de Android, refrescamos el estado del permiso.
+            AloTheme(appearanceMode = settings.value.appearanceMode) {
+                val lightSystemBars = MaterialTheme.colorScheme.background.luminance() > 0.5f
+                SideEffect {
+                    WindowCompat.getInsetsController(window, window.decorView).apply {
+                        isAppearanceLightStatusBars = lightSystemBars
+                        isAppearanceLightNavigationBars = lightSystemBars
+                    }
+                }
+
                 DisposableEffect(Unit) {
                     viewModel.refreshPermission()
                     onDispose { }
@@ -38,6 +59,7 @@ class MainActivity : ComponentActivity() {
                 AppScreen(
                     permissionGranted = state.value,
                     settings = settings.value,
+                    batteryGuide = viewModel.batteryGuide,
                     entries = entries.value,
                     stats = stats.value,
                     messages = messages.value,
@@ -47,9 +69,7 @@ class MainActivity : ComponentActivity() {
                     banner = banner.value,
                     onOpenPermissionSettings = {
                         runCatching {
-                            startActivity(
-                                Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
-                            )
+                            startActivity(Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
                         }
                         viewModel.refreshPermission()
                     },
@@ -64,6 +84,7 @@ class MainActivity : ComponentActivity() {
                     onMarkReviewed = viewModel::markReviewed,
                     onClearHistory = viewModel::clearHistory,
                     onConsumeBanner = viewModel::consumeBanner,
+                    onToggleAppEnabled = viewModel::setAppEnabled,
                     onToggleVoice = viewModel::setVoiceEnabled,
                     onToggleGroups = viewModel::setReadGroups,
                     onToggleHeadphones = viewModel::setOnlyWithHeadphones,
@@ -72,8 +93,20 @@ class MainActivity : ComponentActivity() {
                     onLanguageChange = viewModel::setLanguageTag,
                     onRetentionChange = viewModel::setRetentionDays,
                     onQuietHoursChange = viewModel::setQuietHours,
-                    debugBuild = BuildConfig.DEBUG,
-                    onToggleTestMode = viewModel::setTestMode,
+                    onAppearanceModeChange = viewModel::setAppearanceMode,
+                    onToggleProtection = { enabled ->
+                        val needsPermission = enabled &&
+                            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                            ContextCompat.checkSelfPermission(
+                                this,
+                                Manifest.permission.POST_NOTIFICATIONS,
+                            ) != PackageManager.PERMISSION_GRANTED
+                        if (needsPermission) {
+                            notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        } else {
+                            viewModel.setProtectionEnabled(enabled)
+                        }
+                    },
                 )
             }
         }

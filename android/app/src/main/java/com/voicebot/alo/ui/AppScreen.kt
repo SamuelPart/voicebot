@@ -40,6 +40,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -48,12 +49,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.voicebot.alo.core.log.EventLog
 import com.voicebot.alo.core.settings.AloSettings
+import com.voicebot.alo.core.util.BatteryGuide
 import com.voicebot.alo.data.db.DroppedEntity
 import com.voicebot.alo.data.db.MessageEntity
 import com.voicebot.alo.ui.theme.AloColors
@@ -66,6 +69,7 @@ import java.util.Locale
 fun AppScreen(
     permissionGranted: Boolean,
     settings: AloSettings.Snapshot,
+    batteryGuide: BatteryGuide,
     entries: List<EventLog.Entry>,
     stats: EventLog.Stats,
     messages: List<MessageEntity>,
@@ -83,6 +87,7 @@ fun AppScreen(
     onMarkReviewed: (Long) -> Unit,
     onClearHistory: () -> Unit,
     onConsumeBanner: () -> Unit,
+    onToggleAppEnabled: (Boolean) -> Unit,
     onToggleVoice: (Boolean) -> Unit,
     onToggleGroups: (Boolean) -> Unit,
     onToggleHeadphones: (Boolean) -> Unit,
@@ -91,8 +96,8 @@ fun AppScreen(
     onLanguageChange: (String) -> Unit,
     onRetentionChange: (Int) -> Unit,
     onQuietHoursChange: (Int?, Int?) -> Unit,
-    debugBuild: Boolean = false,
-    onToggleTestMode: (Boolean) -> Unit = {},
+    onAppearanceModeChange: (AloSettings.AppearanceMode) -> Unit,
+    onToggleProtection: (Boolean) -> Unit,
 ) {
     var tab by remember { mutableIntStateOf(0) }
     val tabs = listOf("En vivo", "Historial", "Revisar (${reviewQueue.size})", "Ajustes")
@@ -100,14 +105,18 @@ fun AppScreen(
     Scaffold(
         topBar = {
             TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground,
+                ),
                 title = {
                     Column {
-                        Text("Aló", fontWeight = FontWeight.Bold)
+                        Text("Aló", style = MaterialTheme.typography.headlineSmall)
                         Text(
-                            text = if (permissionGranted) {
-                                "${stats.captured} capturados · ${stats.discarded} descartados"
-                            } else {
-                                "Sin acceso a notificaciones"
+                            text = when {
+                                !settings.appEnabled -> "Pausado"
+                                permissionGranted -> "${stats.captured} capturados · ${stats.discarded} descartados"
+                                else -> "Sin acceso a notificaciones"
                             },
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -123,12 +132,18 @@ fun AppScreen(
                 },
             )
         },
+        containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
         ) {
+            MasterControl(
+                enabled = settings.appEnabled,
+                onToggle = onToggleAppEnabled,
+            )
+
             if (!permissionGranted) {
                 PermissionCard(onOpenPermissionSettings)
             }
@@ -146,12 +161,37 @@ fun AppScreen(
                 }
             }
 
-            TabRow(selectedTabIndex = tab) {
+            TabRow(
+                selectedTabIndex = tab,
+                modifier = Modifier
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                    .clip(RoundedCornerShape(10.dp)),
+                containerColor = MaterialTheme.colorScheme.outlineVariant,
+                contentColor = MaterialTheme.colorScheme.onSurface,
+                indicator = {},
+                divider = {},
+            ) {
                 tabs.forEachIndexed { index, title ->
+                    val selected = tab == index
                     Tab(
-                        selected = tab == index,
+                        selected = selected,
                         onClick = { tab = index },
-                        text = { Text(title, fontSize = 12.sp) },
+                        modifier = Modifier
+                            .padding(2.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(
+                                if (selected) MaterialTheme.colorScheme.surface
+                                else Color.Transparent,
+                            ),
+                        text = {
+                            Text(
+                                title,
+                                fontSize = 11.sp,
+                                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                                color = if (selected) MaterialTheme.colorScheme.onSurface
+                                else MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        },
                     )
                 }
             }
@@ -162,6 +202,7 @@ fun AppScreen(
                 2 -> ReviewTab(reviewQueue, onMarkReviewed)
                 else -> SettingsTab(
                     settings = settings,
+                    batteryGuide = batteryGuide,
                     onOpenBatterySettings = onOpenBatterySettings,
                     onToggleVoice = onToggleVoice,
                     onToggleGroups = onToggleGroups,
@@ -171,10 +212,56 @@ fun AppScreen(
                     onLanguageChange = onLanguageChange,
                     onRetentionChange = onRetentionChange,
                     onQuietHoursChange = onQuietHoursChange,
-                    debugBuild = debugBuild,
-                    onToggleTestMode = onToggleTestMode,
+                    onAppearanceModeChange = onAppearanceModeChange,
+                    onToggleProtection = onToggleProtection,
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun MasterControl(enabled: Boolean, onToggle: (Boolean) -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .clickable { onToggle(!enabled) },
+        colors = CardDefaults.cardColors(
+            containerColor = if (enabled) {
+                AloColors.read.copy(alpha = 0.14f)
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant
+            },
+        ),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(10.dp)
+                    .background(
+                        if (enabled) AloColors.read else MaterialTheme.colorScheme.onSurfaceVariant,
+                        RoundedCornerShape(99.dp),
+                    ),
+            )
+            Spacer(Modifier.width(10.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    if (enabled) "Aló está activo" else "Aló está pausado",
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 15.sp,
+                )
+                Text(
+                    if (enabled) "Escuchará y guardará los mensajes nuevos"
+                    else "No capturará ni reproducirá mensajes",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 11.5.sp,
+                )
+            }
+            Switch(checked = enabled, onCheckedChange = onToggle)
         }
     }
 }
@@ -427,6 +514,7 @@ private fun ReviewTab(queue: List<DroppedEntity>, onMarkReviewed: (Long) -> Unit
 @Composable
 private fun SettingsTab(
     settings: AloSettings.Snapshot,
+    batteryGuide: BatteryGuide,
     onOpenBatterySettings: () -> Unit,
     onToggleVoice: (Boolean) -> Unit,
     onToggleGroups: (Boolean) -> Unit,
@@ -436,8 +524,8 @@ private fun SettingsTab(
     onLanguageChange: (String) -> Unit,
     onRetentionChange: (Int) -> Unit,
     onQuietHoursChange: (Int?, Int?) -> Unit,
-    debugBuild: Boolean,
-    onToggleTestMode: (Boolean) -> Unit,
+    onAppearanceModeChange: (AloSettings.AppearanceMode) -> Unit,
+    onToggleProtection: (Boolean) -> Unit,
 ) {
     Column(
         Modifier
@@ -445,29 +533,34 @@ private fun SettingsTab(
             .verticalScroll(rememberScrollState())
             .padding(12.dp),
     ) {
+        Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+            Column(Modifier.padding(horizontal = 12.dp)) {
+                ToggleRow(
+                    "Protección en segundo plano",
+                    "Muestra una notificación permanente y rearma el lector si el sistema lo desconecta",
+                    settings.protectionEnabled,
+                    onToggleProtection,
+                )
+            }
+        }
+        Spacer(Modifier.height(10.dp))
         ToggleRow("Leer en voz alta", "Apaga la voz sin dejar de capturar mensajes", settings.voiceEnabled, onToggleVoice)
         ToggleRow("Leer mensajes de grupos", null, settings.readGroups, onToggleGroups)
         ToggleRow("Solo con audífonos o Bluetooth", "Ideal para el auto o el trabajo", settings.onlyWithHeadphones, onToggleHeadphones)
         ToggleRow("Silencio durante llamadas", null, settings.pauseDuringCalls, onTogglePauseCalls)
         ToggleRow("Vibrar en vez de hablar", "Para reuniones", settings.vibrateInsteadOfSpeak, onToggleVibrate)
 
-        if (debugBuild) {
-            Spacer(Modifier.height(10.dp))
-            Card(colors = CardDefaults.cardColors(containerColor = AloColors.read.copy(alpha = 0.10f))) {
-                Column(Modifier.padding(12.dp)) {
-                    ToggleRow(
-                        title = "Modo prueba (solo debug)",
-                        subtitle = "Acepta notificaciones de adb (com.android.shell) para probar el filtro sin WhatsApp",
-                        checked = settings.testMode,
-                        onChange = onToggleTestMode,
-                    )
-                    Text(
-                        "Con esto activo puedes ejecutar: adb shell cmd notification post -S messaging " +
-                            "--conversation \"Mamá\" --message \"Mamá:hola\" prueba1 \"hola\"",
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+        Spacer(Modifier.height(14.dp))
+        SectionTitle("Apariencia")
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ChoiceChip("Dispositivo", settings.appearanceMode == AloSettings.AppearanceMode.SYSTEM) {
+                onAppearanceModeChange(AloSettings.AppearanceMode.SYSTEM)
+            }
+            ChoiceChip("Claro", settings.appearanceMode == AloSettings.AppearanceMode.LIGHT) {
+                onAppearanceModeChange(AloSettings.AppearanceMode.LIGHT)
+            }
+            ChoiceChip("Oscuro", settings.appearanceMode == AloSettings.AppearanceMode.DARK) {
+                onAppearanceModeChange(AloSettings.AppearanceMode.DARK)
             }
         }
 
@@ -501,17 +594,24 @@ private fun SettingsTab(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.Settings, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text("Teléfonos que matan el servicio en segundo plano", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                    Text(batteryGuide.title, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
                 }
-                Spacer(Modifier.height(4.dp))
                 Text(
-                    "Si en tu Xiaomi, Samsung, Huawei u Oppo la lectura se detiene, desactiva la optimización " +
-                        "de batería para Aló y marca la app como \"sin restricciones\".",
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    "Guía detectada para ${batteryGuide.manufacturer}",
+                    fontSize = 11.5.sp,
+                    color = MaterialTheme.colorScheme.primary,
                 )
+                Spacer(Modifier.height(6.dp))
+                batteryGuide.steps.forEachIndexed { index, step ->
+                    Text(
+                        "${index + 1}. $step",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 2.dp),
+                    )
+                }
                 Spacer(Modifier.height(8.dp))
-                OutlinedButton(onClick = onOpenBatterySettings) { Text("Abrir ajustes de batería", fontSize = 12.sp) }
+                OutlinedButton(onClick = onOpenBatterySettings) { Text("Abrir ajuste recomendado", fontSize = 12.sp) }
             }
         }
 

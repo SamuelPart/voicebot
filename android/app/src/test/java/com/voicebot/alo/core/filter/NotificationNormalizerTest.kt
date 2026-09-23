@@ -189,21 +189,6 @@ class NotificationNormalizerTest {
         assertEquals(0, (result as FilterResult.Discarded).layer)
     }
 
-    @Test
-    fun `modo prueba acepta las notificaciones publicadas por adb`() {
-        // Equivale a activar "Modo prueba": se añade com.android.shell al allowlist.
-        val base = FilterRules()
-        val rules = base.copy(allowedPackages = base.allowedPackages + "com.android.shell")
-        val normalizer = NotificationNormalizer(rules = rules, clock = { t0 })
-
-        val raw = chatMessage(chat = "Mamá", sender = "Mamá", text = "hola desde adb", timestamp = t0 + 1)
-            .copy(pkg = "com.android.shell")
-
-        val result = normalizer.normalize(raw)
-        assertTrue(result is FilterResult.Read)
-        assertEquals("hola desde adb", (result as FilterResult.Read).events.single().text)
-    }
-
     // ── Capa 3: patrones de aviso (solo sin estructura) ───────────────────────
 
     @Test

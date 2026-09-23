@@ -24,6 +24,8 @@ data class RawNotification(
     /** Mensajes estructurados de MessagingStyle (la señal fuerte). */
     val messages: List<StyleMessage>,
     val hasRemoteInput: Boolean,
+    /** Momento en que Android publicó la notificación; permite recuperar mensajes recientes. */
+    val postedAt: Long = 0L,
 ) {
     data class StyleMessage(
         val text: String?,
@@ -45,7 +47,9 @@ object NotificationSnapshot {
             sbnKey = sbn.key.orEmpty(),
             channelId = NotificationExtras.channelId(n),
             category = n.category,
-            isOngoing = n.isOngoing || (n.flags and Notification.FLAG_ONGOING_EVENT) != 0,
+            // Notification.isOngoing() se añadió en API 31. Leer el flag funciona desde API 1
+            // y evita un NoSuchMethodError en el minSdk 26.
+            isOngoing = (n.flags and Notification.FLAG_ONGOING_EVENT) != 0,
             isGroupSummary = (n.flags and Notification.FLAG_GROUP_SUMMARY) != 0,
             title = extras?.getCharSequence(Notification.EXTRA_TITLE)?.toString(),
             text = extras?.getCharSequence(Notification.EXTRA_TEXT)?.toString(),
@@ -58,6 +62,7 @@ object NotificationSnapshot {
                 RawNotification.StyleMessage(text = it.text, sender = it.sender, timestamp = it.timestamp)
             },
             hasRemoteInput = n.actions?.any { it.remoteInputs?.isNotEmpty() == true } == true,
+            postedAt = sbn.postTime,
         )
     }
 }

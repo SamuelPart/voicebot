@@ -77,10 +77,12 @@ class WaListenerService : NotificationListenerService() {
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         val notification = sbn ?: return
+        // Interruptor maestro: mientras Aló está pausado no captura, guarda ni reproduce.
+        if (!graph.settings.state.value.appEnabled) return
         val raw = runCatching { NotificationSnapshot.from(notification) }.getOrNull() ?: return
 
         // Capa 0 antes de cualquier trabajo: si no es WhatsApp, no se procesa ni se registra.
-        if (!WhatsappPackages.isWhatsapp(raw.pkg) && !isTestPackage(raw.pkg)) return
+        if (!WhatsappPackages.isWhatsapp(raw.pkg)) return
         debugLog("notificación de ${raw.pkg} · canal=${raw.channelId} · mensajes=${raw.messages.size}")
 
         scope.launch {
@@ -90,10 +92,6 @@ class WaListenerService : NotificationListenerService() {
             }.onFailure { Log.w(TAG, "Error procesando notificación", it) }
         }
     }
-
-    /** El "modo prueba" (solo debug) permite notificaciones publicadas por adb. */
-    private fun isTestPackage(pkg: String): Boolean =
-        BuildConfig.DEBUG && graph.settings.state.value.testMode && pkg == TEST_PACKAGE
 
     private fun debugLog(message: String) {
         if (BuildConfig.DEBUG) Log.d(TAG, message)
@@ -170,12 +168,20 @@ class WaListenerService : NotificationListenerService() {
     }
 
     private suspend fun backfillActiveNotifications() {
+        if (!graph.settings.state.value.appEnabled) return
         val active = runCatching { activeNotifications }.getOrNull() ?: return
         val whatsapp = active.filter { WhatsappPackages.isWhatsapp(it.packageName) }
         if (whatsapp.isEmpty()) return
         graph.eventLog.info("Sincronizando ${whatsapp.size} conversación(es) ya abiertas")
+        val now = System.currentTimeMillis()
         whatsapp.forEach { sbn ->
-            runCatching { NotificationSnapshot.from(sbn) }.getOrNull()?.let { process(it, live = false) }
+            runCatching { NotificationSnapshot.from(sbn) }.getOrNull()?.let { raw ->
+                // Si el fabricante desconectó el listener justo cuando llegó el mensaje, Android
+                // lo entrega al reconectar como notificación activa. Se habla solo si es reciente;
+                // las notificaciones antiguas se guardan silenciosamente como backfill.
+                val recent = raw.postedAt > 0L && now - raw.postedAt in 0..RECENT_BACKFILL_MS
+                process(raw, live = recent)
+            }
         }
     }
 
@@ -198,6 +204,6 @@ class WaListenerService : NotificationListenerService() {
     companion object {
         private const val TAG = "Alo/Listener"
         private const val WARMUP_TIMEOUT_MS = 5_000L
-        private const val TEST_PACKAGE = "com.android.shell"
+        private const val RECENT_BACKFILL_MS = 30_000L
     }
 }

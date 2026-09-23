@@ -14,7 +14,10 @@ import kotlinx.coroutines.flow.asStateFlow
  */
 class AloSettings(context: Context) {
 
+    enum class AppearanceMode { SYSTEM, LIGHT, DARK }
+
     data class Snapshot(
+        val appEnabled: Boolean = true,
         val voiceEnabled: Boolean = true,
         val languageTag: String = "es-PE",
         val readGroups: Boolean = true,
@@ -26,12 +29,8 @@ class AloSettings(context: Context) {
         val retentionDays: Int = 30,
         val maxCharsPerMessage: Int = 320,
         val vibrateInsteadOfSpeak: Boolean = false,
-        /**
-         * Modo prueba (solo builds de debug): acepta también las notificaciones de `com.android.shell`,
-         * que es el paquete desde el que se publican con `adb shell cmd notification post`.
-         * Permite validar el pipeline completo por terminal sin depender de WhatsApp.
-         */
-        val testMode: Boolean = false,
+        val appearanceMode: AppearanceMode = AppearanceMode.SYSTEM,
+        val protectionEnabled: Boolean = false,
     )
 
     private val prefs: SharedPreferences =
@@ -59,6 +58,8 @@ class AloSettings(context: Context) {
             quietHoursEnd = quietHoursEnd,
         )
     }
+
+    fun setAppEnabled(enabled: Boolean) = prefs.edit().putBoolean(KEY_APP_ENABLED, enabled).apply()
 
     fun setVoiceEnabled(enabled: Boolean) = prefs.edit().putBoolean(KEY_VOICE, enabled).apply()
 
@@ -88,8 +89,15 @@ class AloSettings(context: Context) {
     fun setVibrateInsteadOfSpeak(enabled: Boolean) =
         prefs.edit().putBoolean(KEY_VIBRATE_INSTEAD, enabled).apply()
 
+    fun setAppearanceMode(mode: AppearanceMode) =
+        prefs.edit().putString(KEY_APPEARANCE, mode.name).apply()
+
+    fun setProtectionEnabled(enabled: Boolean) =
+        prefs.edit().putBoolean(KEY_PROTECTION, enabled).apply()
+
     private fun load(): Snapshot = with(prefs) {
         Snapshot(
+            appEnabled = getBoolean(KEY_APP_ENABLED, true),
             voiceEnabled = getBoolean(KEY_VOICE, true),
             languageTag = getString(KEY_LANGUAGE, "es-PE") ?: "es-PE",
             readGroups = getBoolean(KEY_READ_GROUPS, true),
@@ -101,6 +109,10 @@ class AloSettings(context: Context) {
             retentionDays = getInt(KEY_RETENTION, 30),
             maxCharsPerMessage = getInt(KEY_MAX_CHARS, 320),
             vibrateInsteadOfSpeak = getBoolean(KEY_VIBRATE_INSTEAD, false),
+            appearanceMode = runCatching {
+                AppearanceMode.valueOf(getString(KEY_APPEARANCE, AppearanceMode.SYSTEM.name).orEmpty())
+            }.getOrDefault(AppearanceMode.SYSTEM),
+            protectionEnabled = getBoolean(KEY_PROTECTION, false),
         )
     }
 
@@ -108,6 +120,7 @@ class AloSettings(context: Context) {
         getInt(key, VALUE_NONE).takeIf { it != VALUE_NONE }
 
     companion object {
+        private const val KEY_APP_ENABLED = "app_enabled"
         private const val KEY_VOICE = "voice_enabled"
         private const val KEY_LANGUAGE = "language_tag"
         private const val KEY_READ_GROUPS = "read_groups"
@@ -119,7 +132,8 @@ class AloSettings(context: Context) {
         private const val KEY_RETENTION = "retention_days"
         private const val KEY_MAX_CHARS = "max_chars"
         private const val KEY_VIBRATE_INSTEAD = "vibrate_instead"
-        private const val KEY_TEST_MODE = "test_mode"
+        private const val KEY_APPEARANCE = "appearance_mode"
+        private const val KEY_PROTECTION = "protection_enabled"
         private const val VALUE_NONE = -1
     }
 }

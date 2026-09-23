@@ -13,11 +13,13 @@ import com.voicebot.alo.core.model.FilterResult
 import com.voicebot.alo.core.model.MessageEvent
 import com.voicebot.alo.core.model.WhatsappPackages
 import com.voicebot.alo.core.settings.AloSettings
+import com.voicebot.alo.core.util.BatteryGuide
 import com.voicebot.alo.core.util.DeviceContext
 import com.voicebot.alo.core.util.TextUtils
 import com.voicebot.alo.data.db.DroppedEntity
 import com.voicebot.alo.data.db.MessageEntity
 import com.voicebot.alo.data.toEvent
+import com.voicebot.alo.service.ListenerGuardianService
 import com.voicebot.alo.service.WaListenerService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -34,6 +36,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val logEntries = graph.eventLog.entries
     val stats = graph.eventLog.stats
     val speaking = graph.announcer.speaking
+    val batteryGuide: BatteryGuide = BatteryGuide.forDevice(application)
 
     val messages: StateFlow<List<MessageEntity>> = graph.repository
         .observeRecent(120)
@@ -68,7 +71,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun listenerSettingsIntent() = android.content.Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
 
-    fun batterySettingsIntent() = android.content.Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+    fun batterySettingsIntent() = batteryGuide.intent
 
     fun isListenerComponentEnabled(): Boolean {
         val ctx = getApplication<Application>()
@@ -143,6 +146,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     // ── Ajustes ────────────────────────────────────────────────────────────────
 
+    fun setAppEnabled(enabled: Boolean) {
+        graph.settings.setAppEnabled(enabled)
+        if (!enabled) {
+            graph.announcer.stop()
+            ListenerGuardianService.stop(getApplication<Application>())
+            _banner.value = "Aló está pausado: no capturará ni leerá mensajes"
+        } else {
+            if (graph.settings.state.value.protectionEnabled) {
+                runCatching { ListenerGuardianService.start(getApplication<Application>()) }
+            }
+            _banner.value = "Aló está activo y escuchando mensajes nuevos"
+        }
+    }
+
     fun setVoiceEnabled(enabled: Boolean) {
         graph.settings.setVoiceEnabled(enabled)
         if (!enabled) graph.announcer.stop()
@@ -162,7 +179,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setQuietHours(start: Int?, end: Int?) = graph.settings.setQuietHours(start, end)
 
-    fun setTestMode(enabled: Boolean) = graph.settings.setTestMode(enabled)
+    fun setAppearanceMode(mode: AloSettings.AppearanceMode) = graph.settings.setAppearanceMode(mode)
+
+    fun setProtectionEnabled(enabled: Boolean) {
+        val context = getApplication<Application>()
+        graph.settings.setProtectionEnabled(enabled)
+        if (enabled) {
+            runCatching { ListenerGuardianService.start(context) }
+                .onFailure {
+                    graph.settings.setProtectionEnabled(false)
+                    _banner.value = "Android no permitió iniciar la protección"
+                }
+        } else {
+            ListenerGuardianService.stop(context)
+        }
+    }
 
     fun muteChat(chatId: String, muted: Boolean) = graph.settings.setMuted(chatId, muted)
 

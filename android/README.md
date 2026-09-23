@@ -7,23 +7,52 @@ Esqueleto funcional del lector de mensajes de WhatsApp en tiempo real: **captura
 
 ---
 
-## 1. Cómo compilarlo y probarlo
+## 1. Abrirlo en Android Studio y ejecutarlo
 
-Requisitos: **Android Studio Ladybug o superior**, **JDK 17**, **Android SDK 35**, un teléfono/emulador **con WhatsApp instalado** (Android 8.0+).
+### Requisitos
 
-```bash
-cd android
+| Herramienta | Versión necesaria | Notas |
+|---|---|---|
+| Android Studio | **Ladybug (2024.2) o superior** | Con Koala también debería funcionar |
+| JDK | **17 a 21** | Studio trae su propio JDK en *Settings → Build Tools → Gradle → Gradle JDK* |
+| Android SDK | **Platform 35** | Studio ofrece instalarlo solo al hacer *Sync* |
+| Gradle | **8.9 – 8.13** | ⚠️ **no uses Gradle 9.x**: AGP 8.7.3 necesita la serie 8 |
+| Dispositivo | Teléfono físico **con WhatsApp** o emulador | En un emulador sin WhatsApp solo funcionan los botones de prueba |
 
-# 1) Tests del filtro y de la voz (JVM puro, sin emulador)
-gradle testDebugUnitTest          # o ./gradlew testDebugUnitTest tras "gradle wrapper"
+### Paso 1 — Wrapper de Gradle (la única pieza que falta en el repo)
 
-# 2) Instalar en el teléfono
-gradle installDebug               # o ./gradlew installDebug
-```
+El repositorio **no incluye** `gradlew` / `gradle-wrapper.jar` (son binarios que no se generan a mano). Dos caminos:
 
-En Android Studio: *Open* → carpeta `android/` → Run.
+- **Camino A (recomendado, 1 comando).** Instala Gradle una vez y genera el wrapper:
+  ```bash
+  # macOS:    brew install gradle
+  # Windows:  choco install gradle   (o: scoop install gradle)
+  # Linux:    sdk install gradle 8.11.1   (SDKMAN)
+  cd android
+  gradle wrapper --gradle-version 8.11.1
+  ```
+  A partir de ahí todo funciona con `./gradlew` (macOS/Linux) o `gradlew.bat` (Windows), y también sirve para la CI.
 
-### Primer arranque (obligatorio)
+- **Camino B (sin instalar nada).** Abre el proyecto igual y deja que Studio lo resuelva: te avisará de que no hay wrapper y te ofrecerá **usar la distribución local de Gradle** o **generar el wrapper** (tarea `wrapper`). Acepta y, si te deja elegir versión, pon **8.11.1**.
+
+### Paso 2 — Abrir el proyecto
+
+**Abre la carpeta `android/`, NO la raíz del repositorio** (la raíz no es un proyecto Gradle):
+
+`File → Open… → …/voicebot/android` → **Trust Project** → *Sync Project with Gradle Files*.
+
+La primera sincronización descarga AGP 8.7.3, Kotlin 2.0.21, Compose (BOM 2024.12.01) y Room: **5–10 minutos**. Es normal ver “Gradle: resolving dependencies…”.
+
+### Paso 3 — Elegir dispositivo
+
+- **Teléfono físico (lo que necesitas para probar de verdad):** actívalo en *Ajustes → Acerca del teléfono → toca 7 veces “Número de compilación”*, luego *Opciones de desarrollador → Depuración USB*, conéctalo por cable y acéptale el aviso de “¿Permitir depuración USB?”. Debe aparecer en la barra superior de Studio.
+- **Emulador:** *Device Manager → Create Device* → cualquiera con **Android 10 (API 29) o superior** y Google Play. Ojo: en el emulador no hay WhatsApp, así que solo probarás el pipeline con los botones **“Probar voz”** y **“Probar ruido”** (suficiente para validar filtro, voz e interfaz).
+
+### Paso 4 — Ejecutar
+
+Pulsa **▶ Run** (o `Ctrl/Cmd + R`). Studio compila, instala `com.voicebot.alo.debug` y abre la app.
+
+### Paso 5 — Primer arranque en el teléfono (obligatorio)
 
 1. Abre **Aló** → botón **“Abrir ajustes de acceso”**.
 2. Activa **Acceso a notificaciones** para Aló (Ajustes → Apps → Acceso especial → Acceso a notificaciones).
@@ -32,6 +61,35 @@ En Android Studio: *Open* → carpeta `android/` → Run.
 5. Prueba con los botones **“Probar voz”** (mensaje simulado) y **“Probar ruido”** (avisos que deben descartarse) sin esperar un mensaje real.
 
 Los mensajes que ya estaban en el panel de notificaciones al conceder el permiso se **guardan** pero **no se leen en voz alta** (evita un discurso de 20 mensajes al instalar).
+
+### Paso 6 — Probar con mensajes reales
+
+1. **Pídele a alguien que te escriba** (o escríbete desde un segundo número en otro teléfono). Truco: puedes abrir WhatsApp Web en la computadora y mandarte un mensaje **desde el chat de tu propio contacto (yo → tú)**… mejor evita el chat “Tú” (contigo mismo), porque esos mensajes los envías tú y el filtro los ignora a propósito.
+2. Abre la pestaña **En vivo** de Aló: verás una línea verde *Leídos* con el texto, o una roja *Descartados* con la capa y el motivo.
+3. Prueba el ruido de verdad en el teléfono: activa una **copia de seguridad** (*WhatsApp → Ajustes → Chats → Copia de seguridad → Hacer copia ahora*) y recibe un **“N mensajes nuevos”** de un grupo. Ninguno debe leerse: ambos deben quedar como descartados con su motivo.
+4. Botón **🔊** en *Historial* para volver a oír un mensaje.
+
+### Alternativa por línea de comandos (sin Studio)
+
+```bash
+cd android
+./gradlew testDebugUnitTest      # tests del filtro y de la voz (JVM, sin emulador)
+./gradlew installDebug           # instala en el teléfono conectado por USB
+```
+
+### Errores frecuentes en el primer intento
+
+| Síntoma | Causa y solución |
+|---|---|
+| `AGP requires Gradle 8.9+` / errores de API raros | Gradle incompatible: pon el wrapper en **8.11.1** (*Settings → Build Tools → Gradle → Gradle version*) |
+| `SDK location not found` | Falta `local.properties`: deja que Studio lo genere (o crea `android/local.properties` con `sdk.dir=/ruta/a/Android/Sdk`) |
+| `Failed to find Platform SDK 35` | *Settings → Languages & Frameworks → Android SDK* → instala **Android 15 / API 35** |
+| `Unresolved reference: enableEdgeToEdge` / `collectAsStateWithLifecycle` | Sincronización incompleta: *Build → Clean Project* + *Sync*; deben haber bajado `activity-compose 1.9.3` y `lifecycle 2.8.7` |
+| La app no lee nada | El **Acceso a notificaciones** está apagado (revisa la tarjeta amarilla), o el fabricante mató el servicio: quítale la optimización de batería |
+| En el emulador no pasa nada con WhatsApp | El emulador no trae WhatsApp: usa un teléfono físico para la prueba real |
+| `Room - Schema export directory was not provided` | Es un *warning* esperado: la base usa `exportSchema = false` en la Fase 0 |
+
+Si aparece cualquier otro error de compilación, pásame el texto completo del *Build Output* y lo corrijo.
 
 ---
 

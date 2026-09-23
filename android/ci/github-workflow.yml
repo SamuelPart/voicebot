@@ -1,3 +1,10 @@
+# CÓMO ACTIVARLO
+#   mkdir -p .github/workflows
+#   cp android/ci/github-workflow.yml .github/workflows/android.yml
+#   git add .github/workflows/android.yml && git commit -m "CI: tests y compilación Android" && git push
+#
+# Queda aquí (y no en .github/workflows) a propósito: añadir archivos de workflow requiere un
+# token con permiso `workflows`. Copiarlo cuando tengas ese permiso disponible.
 name: Android — tests y compilación
 
 on:
